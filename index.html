@@ -35,9 +35,10 @@
       <li>A/B의 위치와 묶음 안 슬라이드 순서는 무작위입니다. 순서에는 의미가 없습니다.</li>
     </ul>
     <h2>질문 1 · 조직형태 유사성</h2>
-    <p>두 묶음 중 어느 쪽이 Query와 <b>전반적인 종양 조직형태(histomorphology)</b> 측면에서 더 유사한지 판단해 주십시오. 염색 색조, 스캔 품질, 영상 아티팩트보다는 조직학적 형태를 중심으로 평가해 주십시오.</p>
+    <p>두 묶음 중 어느 쪽이 Query와 <b>슬라이드 전체(WSI) 기준의 전반적인 종양 조직형태(histomorphology)</b> 측면에서 더 유사한지 판단해 주십시오. 염색 색조, 스캔 품질, 영상 아티팩트보다는 조직학적 형태를 중심으로 평가해 주십시오.</p>
     <h2>질문 2 · 참조 사례로서의 유용성</h2>
-    <p>Query를 병리학적으로 검토하고 비교하기 위한 <b>참조 사례(reference cases)</b>로 사용할 경우, 어느 묶음이 더 유용한지 판단해 주십시오. "가장 비슷한가"가 아니라 <b>실제로 참고할 결과로서 어느 쪽이 더 유용한가</b>를 묻는 질문입니다.</p>
+    <p>Query를 병리학적으로 검토하고 비교하기 위한 <b>참조 사례(reference cases)</b>로 사용할 경우, <b>슬라이드 전체를 기준으로</b> 어느 묶음이 더 유용한지 판단해 주십시오. "가장 비슷한가"가 아니라 <b>실제로 참고할 결과로서 어느 쪽이 더 유용한가</b>를 묻는 질문입니다.</p>
+    <p class="note">고배율 패치는 슬라이드의 일부를 무작위로 보여주는 보조 자료입니다. 패치끼리 생김새가 닮았는지가 아니라, <b>전체 이미지(WSI)와 패치를 함께 보고 슬라이드 전체를 기준으로</b> 판단해 주십시오.</p>
     <p class="note">두 질문은 서로 독립적으로 답해 주십시오. 확신도(confidence)는 선택 사항입니다. 응답은 선택하는 즉시 자동 저장되며, 언제든 중단했다가 이어서 할 수 있습니다.</p>
     <div class="row end"><button id="intro-start" class="primary">평가 시작</button></div>
   </div>
@@ -73,15 +74,17 @@
       <div class="questions">
         <fieldset class="panel q" id="q1">
           <legend><span class="qtag">질문 1</span> 조직형태 유사성</legend>
-          <p>두 검색 결과 묶음 중 어느 쪽이 Query 슬라이드와 <b>전반적인 종양 조직형태(histomorphology)</b> 측면에서 더 유사하다고 판단하십니까?</p>
+          <p>두 검색 결과 묶음 중 어느 쪽이 Query 슬라이드와 <b>슬라이드 전체(WSI) 기준의 전반적인 종양 조직형태(histomorphology)</b> 측면에서 더 유사하다고 판단하십니까?</p>
           <p class="muted small">염색 색조, 스캔 품질, 영상 아티팩트보다는 조직학적 형태를 중심으로 평가해 주십시오.</p>
+          <p class="muted small">고배율 패치는 슬라이드의 일부를 무작위로 보여주는 보조 자료입니다. 패치끼리 생김새가 닮았는지가 아니라, <b>전체 이미지(WSI)와 패치를 함께 보고 슬라이드 전체를 기준으로</b> 판단해 주십시오.</p>
           <div class="choices" data-q="q1"></div>
           <div class="conf" data-q="q1_conf"></div>
         </fieldset>
         <fieldset class="panel q" id="q2">
           <legend><span class="qtag">질문 2</span> 참조 사례로서의 유용성</legend>
-          <p>Query 슬라이드를 병리학적으로 검토하고 비교하기 위한 <b>참조 사례(reference cases)</b>로 사용할 경우, A와 B 중 어느 검색 결과 묶음이 더 유용하다고 판단하십니까?</p>
+          <p>Query 슬라이드를 병리학적으로 검토하고 비교하기 위한 <b>참조 사례(reference cases)</b>로 사용할 경우, <b>슬라이드 전체를 기준으로</b> A와 B 중 어느 검색 결과 묶음이 더 유용하다고 판단하십니까?</p>
           <p class="muted small">형태학적으로 가장 비슷한지가 아니라, 실제로 Query를 비교·검토할 때 참고할 결과로서의 유용성을 판단해 주십시오.</p>
+          <p class="muted small">고배율 패치는 슬라이드의 일부를 무작위로 보여주는 보조 자료입니다. 패치끼리 생김새가 닮았는지가 아니라, <b>전체 이미지(WSI)와 패치를 함께 보고 슬라이드 전체를 기준으로</b> 판단해 주십시오.</p>
           <div class="choices" data-q="q2"></div>
           <div class="conf" data-q="q2_conf"></div>
         </fieldset>
