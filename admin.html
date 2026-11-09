@@ -6,7 +6,7 @@
 :root{--bg:#f2f2f2;--s:#fff;--l:#d8d8d8;--t:#1c1c1c;--m:#666;--ok:#1f7a45;--no:#b3261e;--hi:#2b4c7e;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--s:#262626;--l:#3e3e3e;--t:#eee;--m:#aaa;--ok:#7bc896;--no:#f08b84;--hi:#8fb0e0;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#1b1b1b;--s:#262626;--l:#3e3e3e;--t:#eee;--m:#aaa;--ok:#7bc896;--no:#f08b84;--hi:#8fb0e0;color-scheme:dark}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px/1.5 "Pretendard","Noto Sans KR",system-ui,sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);color:var(--t);font:14px/1.5 "Pretendard","Noto Sans KR",system-ui,sans-serif}
 header{position:sticky;top:0;z-index:5;background:var(--s);border-bottom:1px solid var(--l);padding:10px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 h1{font-size:16px;margin:0 12px 0 0}.warn{color:var(--no);font-weight:600;font-size:12px}
 select,input{font:inherit;padding:4px 6px;border:1px solid var(--l);border-radius:5px;background:var(--s);color:var(--t)}
