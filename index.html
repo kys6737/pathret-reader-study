@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Pathology Reader Study</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ── Login ─────────────────────────────────────────── -->
+<section id="screen-login" class="screen center" hidden>
+  <div class="card narrow">
+    <h1>병리 판독 블라인드 평가</h1>
+    <p class="muted">발급받은 판독자 코드를 입력해 주세요. 같은 코드로 다시 접속하면 이어서 진행됩니다.</p>
+    <form id="login-form">
+      <input id="login-code" autocomplete="off" spellcheck="false" placeholder="판독자 코드" required>
+      <button class="primary" type="submit">시작</button>
+    </form>
+    <p id="login-error" class="error" hidden></p>
+    <p id="demo-note" class="note" hidden>데모 모드: 서버가 설정되지 않아 응답이 이 브라우저에만 저장됩니다.</p>
+  </div>
+</section>
+
+<!-- ── Instructions ──────────────────────────────────── -->
+<section id="screen-intro" class="screen center" hidden>
+  <div class="card prose">
+    <h1>평가 안내</h1>
+    <p>총 <b>100문항</b>입니다. 각 문항에는 <b>Query 슬라이드 1장</b>과 두 개의 검색 결과 묶음 <b>Set A</b>, <b>Set B</b>(각 5장)가 제시됩니다.</p>
+    <ul>
+      <li>각 슬라이드는 <b>전체 저배율 이미지</b>와 종양 부위에서 자동으로 고른 <b>고배율(약 20×) 패치 4장</b>으로 제공됩니다.</li>
+      <li>슬라이드를 클릭하면 Query와 나란히 놓고 확대해 비교할 수 있습니다(마우스 휠: 확대, 드래그: 이동, ←/→: 이전/다음 슬라이드).</li>
+      <li>A/B의 위치와 묶음 안 슬라이드 순서는 무작위입니다. 순서에는 의미가 없습니다.</li>
+    </ul>
+    <h2>질문 1 · 조직형태 유사성</h2>
+    <p>두 묶음 중 어느 쪽이 Query와 <b>전반적인 종양 조직형태(histomorphology)</b> 측면에서 더 유사한지 판단해 주십시오. 염색 색조, 스캔 품질, 영상 아티팩트보다는 조직학적 형태를 중심으로 평가해 주십시오.</p>
+    <h2>질문 2 · 참조 사례로서의 유용성</h2>
+    <p>Query를 병리학적으로 검토하고 비교하기 위한 <b>참조 사례(reference cases)</b>로 사용할 경우, 어느 묶음이 더 유용한지 판단해 주십시오. "가장 비슷한가"가 아니라 <b>실제로 참고할 결과로서 어느 쪽이 더 유용한가</b>를 묻는 질문입니다.</p>
+    <p class="note">두 질문은 서로 독립적으로 답해 주십시오. 확신도(confidence)는 선택 사항입니다. 응답은 선택하는 즉시 자동 저장되며, 언제든 중단했다가 이어서 할 수 있습니다.</p>
+    <div class="row end"><button id="intro-start" class="primary">평가 시작</button></div>
+  </div>
+</section>
+
+<!-- ── Main study ────────────────────────────────────── -->
+<section id="screen-study" class="screen" hidden>
+  <header class="topbar">
+    <div class="qcount"><span>Question</span> <b id="q-num">1</b> <span>/ <span id="q-total">100</span></span></div>
+    <div class="progress"><div class="bar"><div id="progress-fill"></div></div><span id="progress-text">0%</span></div>
+    <div id="save-status" class="save" data-state="saved">저장됨</div>
+    <div class="spacer"></div>
+    <button id="btn-list" class="ghost">문항 목록</button>
+    <button id="btn-help" class="ghost">안내</button>
+  </header>
+
+  <main class="study">
+    <div class="query-col">
+      <div class="panel">
+        <div class="panel-h"><h2>Query</h2></div>
+        <div id="query-view"></div>
+      </div>
+    </div>
+    <div class="sets-col">
+      <div class="panel set">
+        <div class="panel-h"><h2>Set A</h2><span class="muted small">5 slides · 클릭하여 Query와 비교</span></div>
+        <div id="set-A" class="slides"></div>
+      </div>
+      <div class="panel set">
+        <div class="panel-h"><h2>Set B</h2><span class="muted small">5 slides · 클릭하여 Query와 비교</span></div>
+        <div id="set-B" class="slides"></div>
+      </div>
+      <div class="questions">
+        <fieldset class="panel q" id="q1">
+          <legend><span class="qtag">질문 1</span> 조직형태 유사성</legend>
+          <p>두 검색 결과 묶음 중 어느 쪽이 Query 슬라이드와 <b>전반적인 종양 조직형태(histomorphology)</b> 측면에서 더 유사하다고 판단하십니까?</p>
+          <p class="muted small">염색 색조, 스캔 품질, 영상 아티팩트보다는 조직학적 형태를 중심으로 평가해 주십시오.</p>
+          <div class="choices" data-q="q1"></div>
+          <div class="conf" data-q="q1_conf"></div>
+        </fieldset>
+        <fieldset class="panel q" id="q2">
+          <legend><span class="qtag">질문 2</span> 참조 사례로서의 유용성</legend>
+          <p>Query 슬라이드를 병리학적으로 검토하고 비교하기 위한 <b>참조 사례(reference cases)</b>로 사용할 경우, A와 B 중 어느 검색 결과 묶음이 더 유용하다고 판단하십니까?</p>
+          <p class="muted small">형태학적으로 가장 비슷한지가 아니라, 실제로 Query를 비교·검토할 때 참고할 결과로서의 유용성을 판단해 주십시오.</p>
+          <div class="choices" data-q="q2"></div>
+          <div class="conf" data-q="q2_conf"></div>
+        </fieldset>
+      </div>
+      <nav class="navrow">
+        <button id="btn-prev" class="ghost">← 이전</button>
+        <span id="nav-hint" class="muted small"></span>
+        <button id="btn-next" class="primary">다음 →</button>
+      </nav>
+    </div>
+  </main>
+</section>
+
+<!-- ── Done ──────────────────────────────────────────── -->
+<section id="screen-done" class="screen center" hidden>
+  <div class="card narrow">
+    <h1>평가를 모두 마쳤습니다</h1>
+    <p>100문항의 응답이 저장되었습니다. 참여해 주셔서 감사합니다.</p>
+    <p id="done-pending" class="error" hidden></p>
+    <div class="row"><button id="done-review" class="ghost">응답 다시 보기</button></div>
+  </div>
+</section>
+
+<!-- ── Compare viewer ───────────────────────────────── -->
+<div id="viewer" class="viewer" hidden>
+  <div class="viewer-top">
+    <div class="vtitle"><b id="v-label">A-1</b><span class="muted small">← / → 슬라이드 이동 · 휠 확대 · 드래그 이동 · 더블클릭 원래 크기 · Esc 닫기</span></div>
+    <button id="v-close" class="ghost">닫기 ✕</button>
+  </div>
+  <div class="viewer-body">
+    <div class="vpane" id="v-left"></div>
+    <div class="vpane" id="v-right"></div>
+  </div>
+  <div class="viewer-strip" id="v-strip"></div>
+</div>
+
+<!-- ── Item list ─────────────────────────────────────── -->
+<dialog id="list-dialog">
+  <div class="dlg-h"><h2>문항 목록</h2><button class="ghost" id="list-close">닫기 ✕</button></div>
+  <p class="muted small">채워진 칸은 두 질문 모두 응답한 문항입니다.</p>
+  <div id="list-grid" class="list-grid"></div>
+</dialog>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
