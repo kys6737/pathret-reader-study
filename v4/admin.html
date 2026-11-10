@@ -14,13 +14,23 @@ main{padding:12px 16px;display:flex;flex-direction:column;gap:12px;max-width:150
 .sum,.card{background:var(--s);border:1px solid var(--l);border-radius:8px;padding:10px 14px;overflow-x:auto}
 table{border-collapse:collapse}td,th{padding:3px 10px;text-align:right;border-bottom:1px solid var(--l);white-space:nowrap}th:first-child,td:first-child{text-align:left}
 .ch{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:8px}.ch b{font-size:15px}.tag{font-size:12px;padding:1px 8px;border:1px solid var(--l);border-radius:99px;color:var(--m)}
-.grid{display:grid;grid-template-columns:180px 1fr;gap:12px}.q img{width:100%;border:1px solid var(--l);border-radius:4px;background:#fff;cursor:zoom-in}
-.sl{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}.sl figure{margin:0}.sl img{width:100%;height:64px;object-fit:contain;background:#fff;border:1px solid var(--l);border-radius:3px;cursor:zoom-in}
-.sl figcaption{font-size:10.5px;color:var(--m);line-height:1.25;word-break:break-all}.sl .sc{font-size:13px;color:var(--t);font-weight:600}
-.s1{box-shadow:inset 0 -3px 0 #7a8fb5}.s2{box-shadow:inset 0 -3px 0 #c9884a}.muted{color:var(--m)}
+.grid{display:grid;grid-template-columns:200px minmax(0,1fr);gap:14px;align-items:start}
+.tile{margin:0;min-width:0}.tile .box{aspect-ratio:4/3;width:100%;background:#fff;border:1px solid var(--l);border-radius:4px;display:grid;place-items:center;overflow:hidden;cursor:zoom-in}
+.tile .box img{width:100%;height:100%;object-fit:contain;display:block}
+.qcap{font-size:11.5px;color:var(--m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+.sl{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:8px}
+.chip{display:flex;justify-content:space-between;gap:4px;font-size:11px;line-height:1.3;margin-top:4px;padding:1px 5px;border-radius:3px;white-space:nowrap;overflow:hidden}
+.chip span{overflow:hidden;text-overflow:ellipsis}.c1{background:#e3eaf6;color:#23406e}.c2{background:#f8e7d5;color:#7a4410}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .c1{background:#26344a;color:#b9cdf0}:root:not([data-theme="light"]) .c2{background:#4a3424;color:#f0cba6}}
+.scs{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;min-height:20px}
+.sc{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 4px;border-radius:4px;font-size:12px;font-weight:700;color:#fff}
+.sc.v1{background:#b3261e}.sc.v2{background:#d9822b}.sc.v3{background:#a0a0a0}.sc.v4{background:#5aa36f}.sc.v5{background:#1f7a45}.sc.v0{background:transparent;color:var(--m);border:1px dashed var(--l)}
+.rt{margin-top:10px;font-size:12.5px}.rt td,.rt th{padding:2px 10px}
+.legend{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--m);flex-wrap:wrap}
+.muted{color:var(--m)}
 dialog{border:0;padding:0;background:transparent;max-width:95vw}dialog img{max-width:95vw;max-height:80vh;display:block;background:#fff}
 dialog .pp{display:flex;gap:6px;margin-top:6px}dialog .pp img{width:22vw;max-width:280px;height:auto}dialog::backdrop{background:rgba(0,0,0,.7)}
-@media (max-width:900px){.grid{grid-template-columns:1fr}.sl{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media (max-width:1100px){.sl{grid-template-columns:repeat(5,minmax(0,1fr))}}@media (max-width:700px){.grid{grid-template-columns:1fr}.grid .q{max-width:240px}}
 </style></head><body>
 <div id="gate" style="min-height:70vh;display:grid;place-items:center"><form id="gf" style="background:var(--s);border:1px solid var(--l);border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:10px;width:min(360px,100%)">
 <b style="font-size:16px">연구자 결과 페이지 (v4)</b><span class="muted" style="font-size:13px">관리자 비밀번호를 입력하세요.</span>
@@ -30,7 +40,7 @@ dialog .pp{display:flex;gap:6px;margin-top:6px}dialog .pp img{width:22vw;max-wid
 <label>구성 <select id="fHalf"><option value="">전체</option><option value="large">큰 차이</option><option value="random">랜덤</option></select></label>
 <label>시스템 <select id="fSys"><option value="">전체</option></select></label>
 <label>검색 <input id="fTxt" placeholder="TCGA ID / item ID"></label><span id="cnt" class="muted"></span><button id="reload">새로고침</button></header>
-<main><div class="sum" id="prog"></div><div class="sum" id="sum"></div><div id="list"></div></main></div><dialog id="dlg"></dialog>
+<main><div class="sum" id="prog"></div><div class="legend">점수 색: <span class="sc v1">1</span><span class="sc v2">2</span><span class="sc v3">3</span><span class="sc v4">4</span><span class="sc v5">5</span><span class="sc v0">–</span> 미평가 · ★ = Layer 2a가 더 높은 기법 · r = 그 기법의 원래 순위</div><div class="sum" id="sum"></div><div id="list"></div></main></div><dialog id="dlg"></dialog>
 <script>
 const API='https://osqcbtjzmzgxiwxxoafm.supabase.co/rest/v1/rpc/rs4_admin_dump',KEY='sb_publishable_KM6kIPtPfooQulEE_PnO4A_2O3c-xBw';
 let D=[],READERS=[];
@@ -83,13 +93,19 @@ function render(){
   const code=fRd.value,fh=fHalf.value,fs=fSys.value,ft=fTxt.value.trim().toUpperCase();
   const list=D.filter(it=>(!fh||it.half===fh)&&(!fs||it.systems.some(x=>x.name===fs))&&(!ft||(it.id+' '+it.query+' '+it.slides.map(s=>s.id).join(' ')).toUpperCase().includes(ft)));
   cnt.textContent=`${list.length} / ${D.length} 문항`;
-  list_.innerHTML=list.map(it=>{const rs=it.resp.filter(r=>!code||r.code===code);const [a,b]=it.systems;
-    return `<section class="card"><div class="ch"><b>#${it.seq}</b><span class="tag">item ${it.id}</span><span>${esc(it.project)} · ${esc(it.diagnosis)}</span><span class="tag">${it.half==='large'?'큰 차이':'랜덤'}</span>
-    <span class="tag s1">${esc(a.name)} L2a ${a.l2a.toFixed(4)}</span><span class="tag s2">${esc(b.name)} L2a ${b.l2a.toFixed(4)}</span><span class="tag">|Δ| ${it.delta.toFixed(4)}</span></div>
-    <div class="grid"><div class="q"><div class="muted" style="font-size:12px">기준 · ${esc(it.query)}</div><img loading="lazy" src="${im(it.query_img,'thumb')}" data-img="${it.query_img}" data-cap="기준 · ${esc(it.query)}"></div>
-    <div class="sl">${it.slides.map((s,i)=>`<figure class="${s.system===a.name?'s1':'s2'}"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} rank ${s.rank} · ${s.id}`)}">
-      <figcaption>${i+1} · ${esc(s.system)} r${s.rank}<br>${rs.map(r=>`<span class="sc" title="${esc(r.reader)}">${r.s[s.img]||'–'}</span>`).join(' ')}</figcaption></figure>`).join('')}</div></div>
-    ${rs.length?`<div class="muted" style="font-size:12px;margin-top:6px">${rs.map(r=>{const m=k=>f2(mean(it.slides.filter(s=>s.system===k&&r.s[s.img]).map(s=>r.s[s.img])));return `${esc(r.reader)}: ${esc(a.name)} 평균 ${m(a.name)} · ${esc(b.name)} 평균 ${m(b.name)} · ${r.sec}s`;}).join(' | ')}</div>`:''}</section>`;}).join('');
+  list_.innerHTML=list.map(it=>{const rs=it.resp.filter(r=>!code||r.code===code);const [a,b]=it.systems;const cls=k=>k===a.name?'c1':'c2';
+    const pref=a.l2a>b.l2a?a:b;
+    const m=(r,k)=>mean(it.slides.filter(s=>s.system===k&&r.s[s.img]).map(s=>r.s[s.img]));
+    const rt=rs.length?`<table class="rt"><tr><th>판독자</th><th>평가</th><th class="c1">${esc(a.name)} 평균</th><th class="c2">${esc(b.name)} 평균</th><th>Layer 2a와</th><th>시간</th></tr>${rs.map(r=>{
+      const n=it.slides.filter(s=>r.s[s.img]).length,ma=m(r,a.name),mb=m(r,b.name);
+      const v=n<10?'<span class="muted">미완료</span>':ma===mb?'<span class="muted">동점</span>':((ma>mb)===(a.l2a>b.l2a)?'<span style="color:var(--ok);font-weight:600">일치</span>':'<span style="color:var(--no);font-weight:600">불일치</span>');
+      return `<tr><td>${esc(r.reader)}</td><td>${n}/10</td><td>${f2(ma)}</td><td>${f2(mb)}</td><td>${v}</td><td>${r.sec}s</td></tr>`;}).join('')}</table>`:'<div class="muted" style="margin-top:8px;font-size:12.5px">응답 없음</div>';
+    return `<section class="card"><div class="ch"><b>#${it.seq}</b><span>${esc(it.project)} · ${esc(it.diagnosis)}</span><span class="tag">${it.half==='large'?'큰 차이':'랜덤'}</span>
+    <span class="tag c1">${esc(a.name)} · L2a ${a.l2a.toFixed(4)}${pref===a?' ★':''}</span><span class="tag c2">${esc(b.name)} · L2a ${b.l2a.toFixed(4)}${pref===b?' ★':''}</span><span class="tag">|Δ| ${it.delta.toFixed(4)}</span><span class="tag">item ${it.id}</span></div>
+    <div class="grid"><figure class="tile q"><div class="box"><img loading="lazy" src="${im(it.query_img,'thumb')}" data-img="${it.query_img}" data-cap="기준 · ${esc(it.query)}"></div><div class="qcap" title="${esc(it.query)}">기준 · ${esc(it.query)}</div></figure>
+    <div class="sl">${it.slides.map((s,i)=>`<figure class="tile"><div class="box"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} rank ${s.rank} · ${s.id}`)}"></div>
+      <div class="chip ${cls(s.system)}" title="${esc(s.id)}"><span>${i+1} · ${esc(s.system)}</span><b>r${s.rank}</b></div>
+      <div class="scs">${rs.map(r=>`<span class="sc v${r.s[s.img]||0}" title="${esc(r.reader)}">${r.s[s.img]||'–'}</span>`).join('')}</div></figure>`).join('')}</div></div>${rt}</section>`;}).join('');
 }
 const list_=document.getElementById('list');
 document.addEventListener('click',e=>{const t=e.target.closest('img[data-img]');if(!t)return;const id=t.dataset.img;
