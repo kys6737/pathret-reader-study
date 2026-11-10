@@ -249,3 +249,14 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 .tab.cur { outline: 2px solid var(--text); outline-offset: 1px; }
 @media (max-width: 1100px) { .left-col { position: static; } }
 @media (max-width: 640px) { .tab .tthumb { height: 40px; } .tab .tthumb img { max-height: 40px; } }
+/* patch locations on the thumbnail: outline only, number beside the box (never covering it) */
+.thumb-ov .pbox { position: absolute; transform: translate(-50%, -50%); border: 2px solid #2f6bff; box-shadow: 0 0 0 1px rgba(255,255,255,.85); }
+.thumb-ov .pnum { position: absolute; left: calc(100% + 3px); top: 50%; transform: translateY(-50%); font: 700 12px/1 system-ui, sans-serif; color: #2f6bff;
+  text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff; }
+.patches figure { position: relative; }
+.pbadge { position: absolute; left: 4px; top: 4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 3px; background: #2f6bff; color: #fff;
+  font: 700 12px/18px system-ui, sans-serif; text-align: center; pointer-events: none; }
+.sview .patches figcaption { font-size: 14px; }
+.keyhint { font-size: 14px; color: var(--text); background: var(--surface-2); border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; }
+.keys { display: flex; flex-direction: column; gap: 4px; font-size: 15px; background: var(--sel-bg); border: 1px solid var(--sel); border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; }
+kbd { display: inline-block; min-width: 22px; padding: 1px 6px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; background: var(--surface); font: 600 13px/1.4 system-ui, sans-serif; text-align: center; }

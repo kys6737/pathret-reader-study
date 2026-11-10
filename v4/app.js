@@ -191,8 +191,10 @@
   function patchMarkers(id) {
     const s = S.slides[id];
     if (!s) return [];
+    // outline the patch region only (never fill it) and put the number beside the box
     return s.p.map(([x, y, w, h], i) =>
-      el("span", { class: "pmark", style: `left:${(x + w / 2) * 100}%;top:${(y + h / 2) * 100}%` }, String(i + 1)));
+      el("span", { class: "pbox", style: `left:${(x + w / 2) * 100}%;top:${(y + h / 2) * 100}%;width:max(12px, ${w * 100}%);height:max(12px, ${h * 100}%)` },
+        el("span", { class: "pnum" }, String(i + 1))));
   }
   function slideThumb(id, onclick) {
     const im = el("img", { src: img(id, "thumb"), alt: "", decoding: "async" });
@@ -210,8 +212,9 @@
     const n = nPatches(id), share = S.slides[id] && S.slides[id].s;
     return el("div", { class: "patches" },
       Array.from({ length: n }, (_, i) => el("figure", { class: "patch", onclick: () => onclick(`p${i + 1}`) },
+        el("span", { class: "pbadge" }, String(i + 1)),
         el("img", { src: img(id, `p${i + 1}`), alt: "", decoding: "async" }),
-        el("figcaption", {}, share ? `${i + 1} · ${share[i]}%` : String(i + 1)))));
+        el("figcaption", {}, share ? `${share[i]}%` : ""))));
   }
   const dxLabel = (it) => [el("span", { class: "tag" }, it.organ), el("span", { class: "tag" }, it.dx)];
 
@@ -430,8 +433,16 @@
   }
   function closeViewer() { $("#viewer").hidden = true; document.body.style.overflow = ""; }
   function step(d) {
-    const n = curItem().slides.length;
-    S.cur = (S.cur + d + n) % n; renderSlide(); syncViewer();
+    const it = curItem(), n = it.slides.length;
+    // → on the last slide of a completed item moves on to the next item
+    if (d > 0 && S.cur === n - 1 && complete(it.id)) { next(); return; }
+    if (d < 0 && S.cur === 0) return;
+    if (d > 0 && S.cur === n - 1) {   // not finished yet: jump to the first unrated slide
+      const j = it.slides.findIndex((x) => !scoresOf(it.id)[x]);
+      if (j !== -1) { S.cur = j; renderSlide(); }
+      return;
+    }
+    S.cur += d; renderSlide(); syncViewer();
   }
   window.addEventListener("resize", () => { if (!$("#viewer").hidden) { V.panes.left.fit(); V.panes.right.fit(); } });
   document.addEventListener("keydown", (e) => {
