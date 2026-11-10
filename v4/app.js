@@ -424,13 +424,9 @@
   }
   function syncViewer(view = "thumb") {
     if ($("#viewer").hidden) return;
-    const it = curItem(), sc = scoresOf(it.id);
+    const it = curItem();
     $("#v-label").textContent = `검색 슬라이드 ${S.cur + 1} / ${it.slides.length}`;
     V.panes.right.set(it.slides[S.cur], `검색 슬라이드 ${S.cur + 1}`, view);
-    $("#v-strip").replaceChildren(...it.slides.map((id, i) =>
-      el("button", { type: "button", class: i === S.cur ? "cur" : "", title: `검색 슬라이드 ${i + 1}${sc[id] ? ` · ${sc[id]}점` : ""}`,
-                     onclick: () => { S.cur = i; renderSlide(); syncViewer(); } },
-        el("img", { src: img(id, "thumb"), alt: "" }), el("span", { class: "sv" }, sc[id] ? `${i + 1} · ${sc[id]}점` : String(i + 1)))));
   }
   function closeViewer() { $("#viewer").hidden = true; document.body.style.overflow = ""; }
   function step(d) {
@@ -440,6 +436,8 @@
   window.addEventListener("resize", () => { if (!$("#viewer").hidden) { V.panes.left.fit(); V.panes.right.fit(); } });
   document.addEventListener("keydown", (e) => {
     if ($("#screen-study").hidden || $("#list-dialog").open || e.ctrlKey || e.metaKey || e.altKey) return;
+    // the zoom viewer shows only the current retrieved slide: no switching or rating while it is open
+    if (!$("#viewer").hidden) { if (e.key === "Escape") closeViewer(); return; }
     if (/^[1-5]$/.test(e.key)) { rate(Number(e.key)); return; }
     if (e.key === "ArrowRight") step(1);
     else if (e.key === "ArrowLeft") step(-1);
