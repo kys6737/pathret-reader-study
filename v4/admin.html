@@ -50,6 +50,8 @@ const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:NaN;
 function rank(a){const o=a.map((v,i)=>[v,i]).sort((x,y)=>x[0]-y[0]),r=Array(a.length);for(let i=0;i<o.length;){let j=i;while(j+1<o.length&&o[j+1][0]===o[i][0])j++;for(let k=i;k<=j;k++)r[o[k][1]]=(i+j)/2+1;i=j+1;}return r;}
 function pearson(x,y){const mx=mean(x),my=mean(y);let a=0,b=0,c=0;for(let i=0;i<x.length;i++){a+=(x[i]-mx)*(y[i]-my);b+=(x[i]-mx)**2;c+=(y[i]-my)**2;}return a/Math.sqrt(b*c);}
 const spear=(x,y)=>x.length>2?pearson(rank(x),rank(y)):NaN;
+function wilson(k,n,z=1.96){if(!n)return[NaN,NaN];const p=k/n,d=1+z*z/n,c=(p+z*z/(2*n))/d,h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d;return[c-h,c+h];}
+function binom(k,n){if(!n)return NaN;const lc=[0];for(let i=1;i<=n;i++)lc[i]=lc[i-1]+Math.log(i);const pmf=i=>Math.exp(lc[n]-lc[i]-lc[n-i]-n*Math.LN2);const pk=pmf(k);let s=0;for(let i=0;i<=n;i++){const q=pmf(i);if(q<=pk*(1+1e-9))s+=q;}return Math.min(1,s);}
 const f2=v=>Number.isFinite(v)?v.toFixed(2):'—';
 async function load(pw){
   const r=await fetch(API,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_pw:pw})});
@@ -80,7 +82,20 @@ function summary(){
     const [a,b]=it.systems,da=mean(m[a.name])-mean(m[b.name]),dl=a.l2a-b.l2a;
     if(da===0)agree[2]++;else if(Math.sign(da)===Math.sign(dl))agree[0]++;else agree[1]++;}
   const half=h=>{const v=R.filter(x=>x.it.half===h).map(x=>x.v);return `${v.length}개 · 평균 ${f2(mean(v))}`;};
-  sum.innerHTML=`<div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
+  // agreement table: per reader x (all / large / random). decisive = set means differ; ties reported separately
+  const agr=(cd,h)=>{const o={k:0,n:0,t:0};for(const it of D){if(h&&it.half!==h)continue;for(const r of it.resp){if(cd&&r.code!==cd)continue;
+      const m={};for(const s of it.slides){const v=r.s[s.img];if(v)(m[s.system]??=[]).push(v);}
+      if(!it.systems.every(x=>(m[x.name]||[]).length===5))continue;
+      const [a,b]=it.systems,da=mean(m[a.name])-mean(m[b.name]);
+      if(da===0)o.t++;else{o.n++;if((da>0)===(a.l2a>b.l2a))o.k++;}}}return o;};
+  const cell=o=>{if(!o.n&&!o.t)return '<td class="muted">—</td>';const [lo,hi]=wilson(o.k,o.n);
+    return `<td>${o.n?`<b>${(100*o.k/o.n).toFixed(1)}%</b> <span class="muted">${o.k}/${o.n} · CI ${(100*lo).toFixed(0)}–${(100*hi).toFixed(0)}% · p=${binom(o.k,o.n).toFixed(3)}</span>`:'—'}${o.t?` <span class="muted">· 동점 ${o.t}</span>`:''}</td>`;};
+  const who=code?READERS.filter(([c])=>c===code):READERS.filter(([c])=>D.some(it=>it.resp.some(r=>r.code===c)));
+  const agTable=`<table style="margin-bottom:12px"><tr><th>Layer 2a 높은 세트 = 판독자 평균 점수 높은 세트</th><th>전체</th><th>큰 차이 문항</th><th>랜덤 문항</th></tr>
+    ${who.map(([c,l])=>`<tr><td>${esc(l)}</td>${cell(agr(c))}${cell(agr(c,'large'))}${cell(agr(c,'random'))}</tr>`).join('')}
+    ${!code&&who.length>1?`<tr><td><b>전체 판독자</b></td>${cell(agr())}${cell(agr('', 'large'))}${cell(agr('', 'random'))}</tr>`:''}</table>
+    <div class="muted" style="font-size:12px;margin:-6px 0 12px">10장을 모두 평가한 문항만 계산합니다. 일치율 = 일치 / (일치 + 불일치), 동점(두 세트 평균이 같음)은 분모에서 빼고 따로 표시합니다. CI = Wilson 95% 신뢰구간, p = 50% 대비 이항검정(양측).</div>`;
+  sum.innerHTML=agTable+`<div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
   <table><tr><th>시스템</th><th>평가 수</th><th>평균 점수</th></tr>${st}</table>
   <table><tr><th>지표</th><th></th></tr>
   <tr><td>평가한 슬라이드</td><td>${R.length}</td></tr>
