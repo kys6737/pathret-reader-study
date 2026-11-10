@@ -1,0 +1,108 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reader Study Admin v4</title>
+<style>
+:root{--bg:#f2f2f2;--s:#fff;--l:#d8d8d8;--t:#1c1c1c;--m:#666;--ok:#1f7a45;--no:#b3261e;--hi:#2b4c7e;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--s:#262626;--l:#3e3e3e;--t:#eee;--m:#aaa;--ok:#7bc896;--no:#f08b84;--hi:#8fb0e0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b1b1b;--s:#262626;--l:#3e3e3e;--t:#eee;--m:#aaa;--ok:#7bc896;--no:#f08b84;--hi:#8fb0e0;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);color:var(--t);font:14px/1.5 "Pretendard","Noto Sans KR",system-ui,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--s);border-bottom:1px solid var(--l);padding:10px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+h1{font-size:16px;margin:0 12px 0 0}.warn{color:var(--no);font-weight:600;font-size:12px}
+select,input,button{font:inherit;padding:4px 8px;border:1px solid var(--l);border-radius:5px;background:var(--s);color:var(--t)}
+main{padding:12px 16px;display:flex;flex-direction:column;gap:12px;max-width:1500px;margin:0 auto}
+.sum,.card{background:var(--s);border:1px solid var(--l);border-radius:8px;padding:10px 14px;overflow-x:auto}
+table{border-collapse:collapse}td,th{padding:3px 10px;text-align:right;border-bottom:1px solid var(--l);white-space:nowrap}th:first-child,td:first-child{text-align:left}
+.ch{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:8px}.ch b{font-size:15px}.tag{font-size:12px;padding:1px 8px;border:1px solid var(--l);border-radius:99px;color:var(--m)}
+.grid{display:grid;grid-template-columns:180px 1fr;gap:12px}.q img{width:100%;border:1px solid var(--l);border-radius:4px;background:#fff;cursor:zoom-in}
+.sl{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}.sl figure{margin:0}.sl img{width:100%;height:64px;object-fit:contain;background:#fff;border:1px solid var(--l);border-radius:3px;cursor:zoom-in}
+.sl figcaption{font-size:10.5px;color:var(--m);line-height:1.25;word-break:break-all}.sl .sc{font-size:13px;color:var(--t);font-weight:600}
+.s1{box-shadow:inset 0 -3px 0 #7a8fb5}.s2{box-shadow:inset 0 -3px 0 #c9884a}.muted{color:var(--m)}
+dialog{border:0;padding:0;background:transparent;max-width:95vw}dialog img{max-width:95vw;max-height:80vh;display:block;background:#fff}
+dialog .pp{display:flex;gap:6px;margin-top:6px}dialog .pp img{width:22vw;max-width:280px;height:auto}dialog::backdrop{background:rgba(0,0,0,.7)}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.sl{grid-template-columns:repeat(5,minmax(0,1fr))}}
+</style></head><body>
+<div id="gate" style="min-height:70vh;display:grid;place-items:center"><form id="gf" style="background:var(--s);border:1px solid var(--l);border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:10px;width:min(360px,100%)">
+<b style="font-size:16px">연구자 결과 페이지 (v4)</b><span class="muted" style="font-size:13px">관리자 비밀번호를 입력하세요.</span>
+<input id="gpw" type="password" autocomplete="current-password" required><button>열기</button><span id="gerr" style="color:var(--no);font-size:13px"></span></form></div>
+<div id="app" hidden><header><h1>Reader Study v4 결과 (언블라인드)</h1><span class="warn">⚠ 연구자 전용 · 병리의에게 공유 금지</span>
+<label>판독자 <select id="fRd"><option value="">전체</option></select></label>
+<label>구성 <select id="fHalf"><option value="">전체</option><option value="large">큰 차이</option><option value="random">랜덤</option></select></label>
+<label>시스템 <select id="fSys"><option value="">전체</option></select></label>
+<label>검색 <input id="fTxt" placeholder="TCGA ID / item ID"></label><span id="cnt" class="muted"></span><button id="reload">새로고침</button></header>
+<main><div class="sum" id="prog"></div><div class="sum" id="sum"></div><div id="list"></div></main></div><dialog id="dlg"></dialog>
+<script>
+const API='https://osqcbtjzmzgxiwxxoafm.supabase.co/rest/v1/rpc/rs4_admin_dump',KEY='sb_publishable_KM6kIPtPfooQulEE_PnO4A_2O3c-xBw';
+let D=[],READERS=[];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const im=(id,f)=>`img/${id}/${f}.webp`;
+const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:NaN;
+function rank(a){const o=a.map((v,i)=>[v,i]).sort((x,y)=>x[0]-y[0]),r=Array(a.length);for(let i=0;i<o.length;){let j=i;while(j+1<o.length&&o[j+1][0]===o[i][0])j++;for(let k=i;k<=j;k++)r[o[k][1]]=(i+j)/2+1;i=j+1;}return r;}
+function pearson(x,y){const mx=mean(x),my=mean(y);let a=0,b=0,c=0;for(let i=0;i<x.length;i++){a+=(x[i]-mx)*(y[i]-my);b+=(x[i]-mx)**2;c+=(y[i]-my)**2;}return a/Math.sqrt(b*c);}
+const spear=(x,y)=>x.length>2?pearson(rank(x),rank(y)):NaN;
+const f2=v=>Number.isFinite(v)?v.toFixed(2):'—';
+async function load(pw){
+  const r=await fetch(API,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_pw:pw})});
+  const j=await r.json();if(!r.ok)throw new Error(j.message||r.status);if(j===null)throw new Error('invalid admin password');
+  const label=Object.fromEntries(j.readers.map(x=>[x.code,x.label||x.code]));
+  READERS=j.readers.map(x=>[x.code,x.label||x.code]);
+  const by={};for(const x of j.responses)(by[x.item_id]??=[]).push({code:x.reader,reader:label[x.reader]||x.reader,s:x.scores||{},sec:Math.round((x.time_ms||0)/1000),at:x.updated_at});
+  D=j.key.sort((a,b)=>a.seq-b.seq).map(it=>({...it,resp:by[it.id]||[]}));
+  const tot=D.reduce((a,it)=>a+it.slides.length,0);
+  prog.innerHTML=`<table><tr><th>판독자</th><th>코드</th><th>평가한 슬라이드</th><th>완료 문항</th><th>마지막 저장</th></tr>${READERS.map(([c,l])=>{const rs=j.responses.filter(x=>x.reader===c);
+    const n=rs.reduce((a,x)=>a+Object.keys(x.scores||{}).length,0),done=D.filter(it=>it.resp.some(r=>r.code===c&&it.slides.every(s=>r.s[s.img]))).length,last=rs.map(x=>x.updated_at).sort().pop();
+    return `<tr><td>${esc(l)}</td><td><code>${esc(c)}</code></td><td>${n} / ${tot}</td><td>${done} / ${D.length}</td><td>${last?new Date(last).toLocaleString('ko-KR'):'—'}</td></tr>`;}).join('')}</table>`;
+}
+// slide-level rows: one per (reader, item, slide) with a score
+function rows(code){const out=[];for(const it of D)for(const r of it.resp){if(code&&r.code!==code)continue;for(const s of it.slides){const v=r.s[s.img];if(v)out.push({it,r,s,v});}}return out;}
+function summary(){
+  const code=fRd.value,R=rows(code);
+  if(!R.length){sum.innerHTML='<span class="muted">아직 응답이 없습니다.</span>';return;}
+  const sys={};for(const x of R)(sys[x.s.system]??=[]).push(x.v);
+  const st=Object.entries(sys).sort((a,b)=>mean(b[1])-mean(a[1])).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${v.length}</td><td>${f2(mean(v))}</td></tr>`).join('');
+  const dist=[1,2,3,4,5].map(k=>R.filter(x=>x.v===k).length);
+  // set level: mean score of each system's top-5 vs its Layer 2a; item level: which set scored higher vs L2a preference
+  const sets=[],agree=[0,0,0];
+  for(const it of D)for(const r of it.resp){if(code&&r.code!==code)continue;const m={};
+    for(const s of it.slides){const v=r.s[s.img];if(v)(m[s.system]??=[]).push(v);}
+    const ks=it.systems.map(x=>x.name);if(!ks.every(k=>(m[k]||[]).length===5))continue;
+    for(const x of it.systems)sets.push([x.l2a,mean(m[x.name])]);
+    const [a,b]=it.systems,da=mean(m[a.name])-mean(m[b.name]),dl=a.l2a-b.l2a;
+    if(da===0)agree[2]++;else if(Math.sign(da)===Math.sign(dl))agree[0]++;else agree[1]++;}
+  const half=h=>{const v=R.filter(x=>x.it.half===h).map(x=>x.v);return `${v.length}개 · 평균 ${f2(mean(v))}`;};
+  sum.innerHTML=`<div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
+  <table><tr><th>시스템</th><th>평가 수</th><th>평균 점수</th></tr>${st}</table>
+  <table><tr><th>지표</th><th></th></tr>
+  <tr><td>평가한 슬라이드</td><td>${R.length}</td></tr>
+  <tr><td>점수 분포 1/2/3/4/5</td><td>${dist.join(' / ')}</td></tr>
+  <tr><td>세트(top-5) 평균 점수 ↔ Layer 2a Spearman</td><td>${f2(spear(sets.map(x=>x[0]),sets.map(x=>x[1])))} (n=${sets.length})</td></tr>
+  <tr><td>문항별: 평균 점수 높은 세트 = Layer 2a 높은 세트</td><td>${agree[0]} 일치 / ${agree[1]} 불일치 / ${agree[2]} 동점</td></tr>
+  <tr><td>큰 차이 문항</td><td>${half('large')}</td></tr><tr><td>랜덤 문항</td><td>${half('random')}</td></tr></table></div>`;
+}
+function render(){
+  const code=fRd.value,fh=fHalf.value,fs=fSys.value,ft=fTxt.value.trim().toUpperCase();
+  const list=D.filter(it=>(!fh||it.half===fh)&&(!fs||it.systems.some(x=>x.name===fs))&&(!ft||(it.id+' '+it.query+' '+it.slides.map(s=>s.id).join(' ')).toUpperCase().includes(ft)));
+  cnt.textContent=`${list.length} / ${D.length} 문항`;
+  list_.innerHTML=list.map(it=>{const rs=it.resp.filter(r=>!code||r.code===code);const [a,b]=it.systems;
+    return `<section class="card"><div class="ch"><b>#${it.seq}</b><span class="tag">item ${it.id}</span><span>${esc(it.project)} · ${esc(it.diagnosis)}</span><span class="tag">${it.half==='large'?'큰 차이':'랜덤'}</span>
+    <span class="tag s1">${esc(a.name)} L2a ${a.l2a.toFixed(4)}</span><span class="tag s2">${esc(b.name)} L2a ${b.l2a.toFixed(4)}</span><span class="tag">|Δ| ${it.delta.toFixed(4)}</span></div>
+    <div class="grid"><div class="q"><div class="muted" style="font-size:12px">기준 · ${esc(it.query)}</div><img loading="lazy" src="${im(it.query_img,'thumb')}" data-img="${it.query_img}" data-cap="기준 · ${esc(it.query)}"></div>
+    <div class="sl">${it.slides.map((s,i)=>`<figure class="${s.system===a.name?'s1':'s2'}"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} rank ${s.rank} · ${s.id}`)}">
+      <figcaption>${i+1} · ${esc(s.system)} r${s.rank}<br>${rs.map(r=>`<span class="sc" title="${esc(r.reader)}">${r.s[s.img]||'–'}</span>`).join(' ')}</figcaption></figure>`).join('')}</div></div>
+    ${rs.length?`<div class="muted" style="font-size:12px;margin-top:6px">${rs.map(r=>{const m=k=>f2(mean(it.slides.filter(s=>s.system===k&&r.s[s.img]).map(s=>r.s[s.img])));return `${esc(r.reader)}: ${esc(a.name)} 평균 ${m(a.name)} · ${esc(b.name)} 평균 ${m(b.name)} · ${r.sec}s`;}).join(' | ')}</div>`:''}</section>`;}).join('');
+}
+const list_=document.getElementById('list');
+document.addEventListener('click',e=>{const t=e.target.closest('img[data-img]');if(!t)return;const id=t.dataset.img;
+  dlg.innerHTML=`<div style="color:#fff;margin-bottom:4px">${t.dataset.cap}</div><img src="${im(id,'thumb')}"><div class="pp">${[1,2,3,4].map(i=>`<img src="${im(id,'p'+i)}" onerror="this.remove()">`).join('')}</div>`;dlg.showModal();});
+dlg.addEventListener('click',()=>dlg.close());
+for(const x of[fHalf,fSys])x.onchange=render;fRd.onchange=()=>{summary();render();};fTxt.oninput=render;
+gf.onsubmit=async e=>{e.preventDefault();gerr.textContent='';
+  try{await load(gpw.value);}catch(err){gerr.textContent=/admin password/.test(err.message)?'비밀번호가 틀렸습니다.':'불러오기 실패: '+err.message;return;}
+  try{sessionStorage.setItem('rs_admin_pw',gpw.value);}catch{}
+  gate.hidden=true;app.hidden=false;
+  for(const [c,l] of READERS)fRd.add(new Option(l,c));
+  for(const s of [...new Set(D.flatMap(i=>i.systems.map(x=>x.name)))].sort())fSys.add(new Option(s,s));
+  summary();render();};
+reload.onclick=async()=>{let pw='';try{pw=sessionStorage.getItem('rs_admin_pw')||'';}catch{}if(!pw)return location.reload();await load(pw);summary();render();};
+try{const pw=sessionStorage.getItem('rs_admin_pw');if(pw){gpw.value=pw;gf.requestSubmit();}}catch{}
+</script></body></html>

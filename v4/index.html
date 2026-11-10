@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Pathology Reader Study</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ── Login ─────────────────────────────────────────── -->
+<section id="screen-login" class="screen center" hidden>
+  <div class="card narrow">
+    <h1>병리 판독 블라인드 평가</h1>
+    <p class="muted">발급받은 판독자 코드를 입력해 주세요. 같은 코드로 다시 접속하면 이어서 진행됩니다.</p>
+    <form id="login-form">
+      <input id="login-code" autocomplete="off" spellcheck="false" placeholder="판독자 코드" required>
+      <button class="primary" type="submit">시작</button>
+    </form>
+    <p id="login-error" class="error" hidden></p>
+    <p id="demo-note" class="note" hidden>데모 모드: 서버가 설정되지 않아 응답이 이 브라우저에만 저장됩니다.</p>
+  </div>
+</section>
+
+<!-- ── Instructions ──────────────────────────────────── -->
+<section id="screen-intro" class="screen center" hidden>
+  <div class="card prose">
+    <h1>평가 안내</h1>
+    <p>총 <b><span class="n-items">50</span>문항</b>입니다. 각 문항에는 <b>기준 슬라이드 1장</b>과 <b>검색 슬라이드 10장</b>이 제시됩니다. 검색 슬라이드를 <b>한 장씩</b> 기준 슬라이드와 비교하여 유사도를 1–5점으로 평가해 주십시오.</p>
+    <ul>
+      <li>모든 슬라이드에는 <b>장기와 암종 정보</b>가 함께 표시됩니다. 한 문항 안의 슬라이드는 모두 같은 장기·암종입니다.</li>
+      <li>각 슬라이드는 <b>전체 저배율 이미지</b>와 <b>고배율(약 20×) 패치 4장</b>으로 제공됩니다. 전체 이미지 위의 <b>숫자는 각 패치의 위치</b>입니다.</li>
+      <li>고배율 패치는 <b>종양 영역 안에서</b> 형태가 서로 다른 <b>대표적인 조직 유형 4가지</b>를 1장씩 보여드리며, 종양 영역에서 많이 나타나는 유형부터 순서대로 배치했습니다.</li>
+      <li>이미지를 클릭하면 기준 슬라이드와 나란히 놓고 확대해 비교할 수 있습니다(마우스 휠: 확대, 드래그: 이동).</li>
+      <li>검색 슬라이드의 순서는 무작위이며 의미가 없습니다. 각 슬라이드는 다른 슬라이드와 비교하지 말고 <b>기준 슬라이드와만</b> 비교해 독립적으로 평가해 주십시오.</li>
+    </ul>
+    <h2>평가 질문</h2>
+    <p class="qtext">기준 슬라이드의 종양과 비교했을 때, 해당 검색 슬라이드의 종양이 <b>조직학적 성장·분화 패턴, 세포 및 핵의 형태, 세포 밀도</b> 등에서 얼마나 유사합니까?</p>
+    <p class="muted small">(제공된 전체 이미지와 고해상도 patch의 형태학적 특징을 종합적으로 고려해 평가해 주십시오.)</p>
+    <table class="scale">
+      <tr><th>1점</th><td>유사하지 않음</td></tr>
+      <tr><th>2점</th><td>약간 유사함</td></tr>
+      <tr><th>3점</th><td>유사함</td></tr>
+      <tr><th>4점</th><td>매우 유사함</td></tr>
+      <tr><th>5점</th><td>임상적으로 구별하기 어려움</td></tr>
+    </table>
+    <p class="note">점수는 오른쪽 아래 평가 영역의 버튼 또는 키보드 <b>1–5</b>로 입력합니다. 입력하면 다음 검색 슬라이드로 자동으로 넘어가며, ← / → 키로 슬라이드를 이동할 수 있습니다. 응답은 즉시 자동 저장되며, 언제든 중단했다가 같은 코드로 이어서 할 수 있습니다.</p>
+    <div class="row end"><button id="intro-start" class="primary">평가 시작</button></div>
+  </div>
+</section>
+
+<!-- ── Main study ────────────────────────────────────── -->
+<section id="screen-study" class="screen" hidden>
+  <header class="topbar">
+    <div class="qcount"><span>문항</span> <b id="q-num">1</b> <span>/ <span id="q-total">50</span></span></div>
+    <div class="progress"><div class="bar"><div id="progress-fill"></div></div><span id="progress-text">0%</span></div>
+    <div id="save-status" class="save" data-state="saved">저장됨</div>
+    <div class="spacer"></div>
+    <button id="btn-list" class="ghost">문항 목록</button>
+    <button id="btn-help" class="ghost">안내</button>
+  </header>
+
+  <main class="study">
+    <div class="left-col">
+      <div class="panel side" id="ref-panel">
+        <div class="panel-h"><h2>기준 슬라이드</h2><span class="dx" id="ref-dx"></span></div>
+        <div id="ref-view" class="sview"></div>
+      </div>
+      <div class="panel" id="nav-panel">
+        <div class="panel-h"><h2>이 문항의 검색 슬라이드</h2><span class="muted small">클릭하여 이동</span><span class="iprog-text" id="iprog-text">0 / 10 평가</span></div>
+        <div class="ibar"><div id="iprog-fill"></div></div>
+        <div class="tabs" id="ret-tabs" aria-label="검색 슬라이드 목록"></div>
+      </div>
+    </div>
+    <div class="right-col">
+      <div class="panel side" id="ret-panel">
+        <div class="panel-h"><h2>검색 슬라이드 <span id="ret-num">1</span> / <span id="ret-total">10</span></h2><span class="dx" id="ret-dx"></span></div>
+        <div id="ret-view" class="sview"></div>
+      </div>
+      <div class="panel rate">
+        <p class="qtext">기준 슬라이드의 종양과 비교했을 때, 이 검색 슬라이드의 종양이 <b>조직학적 성장·분화 패턴, 세포 및 핵의 형태, 세포 밀도</b> 등에서 얼마나 유사합니까?</p>
+        <p class="muted small">제공된 전체 이미지와 고해상도 patch의 형태학적 특징을 종합적으로 고려해 평가해 주십시오.</p>
+        <div class="scores" id="scores"></div>
+        <nav class="navrow">
+          <button id="btn-prev" class="ghost">← 이전 문항</button>
+          <span id="nav-hint" class="muted small"></span>
+          <button id="btn-next" class="primary">다음 문항 →</button>
+        </nav>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ── Done ──────────────────────────────────────────── -->
+<section id="screen-done" class="screen center" hidden>
+  <div class="card narrow">
+    <h1>평가를 모두 마쳤습니다</h1>
+    <p>모든 응답이 저장되었습니다. 참여해 주셔서 감사합니다.</p>
+    <p id="done-pending" class="error" hidden></p>
+    <div class="row"><button id="done-review" class="ghost">응답 다시 보기</button></div>
+  </div>
+</section>
+
+<!-- ── Compare viewer ───────────────────────────────── -->
+<div id="viewer" class="viewer" hidden>
+  <div class="viewer-top">
+    <div class="vtitle"><b id="v-label">검색 1</b><span class="muted small">← / → 슬라이드 이동 · 휠 확대 · 드래그 이동 · 더블클릭 원래 크기 · Esc 닫기</span></div>
+    <button id="v-close" class="ghost">닫기 ✕</button>
+  </div>
+  <div class="viewer-body">
+    <div class="vpane" id="v-left"></div>
+    <div class="vpane" id="v-right"></div>
+    <div class="viewer-strip" id="v-strip"></div>
+  </div>
+</div>
+
+<!-- ── Item list ─────────────────────────────────────── -->
+<dialog id="list-dialog">
+  <div class="dlg-h"><h2>문항 목록</h2><button class="ghost" id="list-close">닫기 ✕</button></div>
+  <p class="muted small">채워진 칸은 10장 모두 평가한 문항, 점선은 일부만 평가한 문항입니다.</p>
+  <div id="list-grid" class="list-grid"></div>
+</dialog>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
