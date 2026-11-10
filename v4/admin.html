@@ -40,7 +40,7 @@ dialog .pp{display:flex;gap:6px;margin-top:6px}dialog .pp img{width:22vw;max-wid
 <label>구성 <select id="fHalf"><option value="">전체</option><option value="large">큰 차이</option><option value="random">랜덤</option></select></label>
 <label>시스템 <select id="fSys"><option value="">전체</option></select></label>
 <label>검색 <input id="fTxt" placeholder="TCGA ID / item ID"></label><span id="cnt" class="muted"></span><button id="reload">새로고침</button></header>
-<main><div class="sum" id="prog"></div><div class="legend">점수 색: <span class="sc v1">1</span><span class="sc v2">2</span><span class="sc v3">3</span><span class="sc v4">4</span><span class="sc v5">5</span><span class="sc v0">–</span> 미평가 · ★ = Layer 2a가 더 높은 기법 · r = 그 기법의 원래 순위</div><div class="sum" id="sum"></div><div id="list"></div></main></div><dialog id="dlg"></dialog>
+<main><div class="sum" id="prog"></div><div class="legend">점수 색: <span class="sc v1">1</span><span class="sc v2">2</span><span class="sc v3">3</span><span class="sc v4">4</span><span class="sc v5">5</span><span class="sc v0">-</span> 미평가 · ★ = Layer 2a가 더 높은 기법 · r = 그 기법의 원래 순위</div><div class="sum" id="sum"></div><div id="list"></div></main></div><dialog id="dlg"></dialog>
 <script>
 const API='https://osqcbtjzmzgxiwxxoafm.supabase.co/rest/v1/rpc/rs4_admin_dump',KEY='sb_publishable_KM6kIPtPfooQulEE_PnO4A_2O3c-xBw';
 let D=[],READERS=[];
@@ -52,7 +52,7 @@ function pearson(x,y){const mx=mean(x),my=mean(y);let a=0,b=0,c=0;for(let i=0;i<
 const spear=(x,y)=>x.length>2?pearson(rank(x),rank(y)):NaN;
 function wilson(k,n,z=1.96){if(!n)return[NaN,NaN];const p=k/n,d=1+z*z/n,c=(p+z*z/(2*n))/d,h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d;return[c-h,c+h];}
 function binom(k,n){if(!n)return NaN;const lc=[0];for(let i=1;i<=n;i++)lc[i]=lc[i-1]+Math.log(i);const pmf=i=>Math.exp(lc[n]-lc[i]-lc[n-i]-n*Math.LN2);const pk=pmf(k);let s=0;for(let i=0;i<=n;i++){const q=pmf(i);if(q<=pk*(1+1e-9))s+=q;}return Math.min(1,s);}
-const f2=v=>Number.isFinite(v)?v.toFixed(2):'—';
+const f2=v=>Number.isFinite(v)?v.toFixed(2):'-';
 async function load(pw){
   const r=await fetch(API,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_pw:pw})});
   const j=await r.json();if(!r.ok)throw new Error(j.message||r.status);if(j===null)throw new Error('invalid admin password');
@@ -63,7 +63,7 @@ async function load(pw){
   const tot=D.reduce((a,it)=>a+it.slides.length,0);
   prog.innerHTML=`<table><tr><th>판독자</th><th>코드</th><th>평가한 슬라이드</th><th>완료 문항</th><th>마지막 저장</th></tr>${READERS.map(([c,l])=>{const rs=j.responses.filter(x=>x.reader===c);
     const n=rs.reduce((a,x)=>a+Object.keys(x.scores||{}).length,0),done=D.filter(it=>it.resp.some(r=>r.code===c&&it.slides.every(s=>r.s[s.img]))).length,last=rs.map(x=>x.updated_at).sort().pop();
-    return `<tr><td>${esc(l)}</td><td><code>${esc(c)}</code></td><td>${n} / ${tot}</td><td>${done} / ${D.length}</td><td>${last?new Date(last).toLocaleString('ko-KR'):'—'}</td></tr>`;}).join('')}</table>`;
+    return `<tr><td>${esc(l)}</td><td><code>${esc(c)}</code></td><td>${n} / ${tot}</td><td>${done} / ${D.length}</td><td>${last?new Date(last).toLocaleString('ko-KR'):'-'}</td></tr>`;}).join('')}</table>`;
 }
 // slide-level rows: one per (reader, item, slide) with a score
 function rows(code){const out=[];for(const it of D)for(const r of it.resp){if(code&&r.code!==code)continue;for(const s of it.slides){const v=r.s[s.img];if(v)out.push({it,r,s,v});}}return out;}
@@ -88,8 +88,8 @@ function summary(){
       if(!it.systems.every(x=>(m[x.name]||[]).length===5))continue;
       const [a,b]=it.systems,da=mean(m[a.name])-mean(m[b.name]);
       if(da===0)o.t++;else{o.n++;if((da>0)===(a.l2a>b.l2a))o.k++;}}}return o;};
-  const cell=o=>{if(!o.n&&!o.t)return '<td class="muted">—</td>';const [lo,hi]=wilson(o.k,o.n);
-    return `<td>${o.n?`<b>${(100*o.k/o.n).toFixed(1)}%</b> <span class="muted">${o.k}/${o.n} · CI ${(100*lo).toFixed(0)}–${(100*hi).toFixed(0)}% · p=${binom(o.k,o.n).toFixed(3)}</span>`:'—'}${o.t?` <span class="muted">· 동점 ${o.t}</span>`:''}</td>`;};
+  const cell=o=>{if(!o.n&&!o.t)return '<td class="muted">-</td>';const [lo,hi]=wilson(o.k,o.n);
+    return `<td>${o.n?`<b>${(100*o.k/o.n).toFixed(1)}%</b> <span class="muted">${o.k}/${o.n} · CI ${(100*lo).toFixed(0)}-${(100*hi).toFixed(0)}% · p=${binom(o.k,o.n).toFixed(3)}</span>`:'-'}${o.t?` <span class="muted">· 동점 ${o.t}</span>`:''}</td>`;};
   const who=code?READERS.filter(([c])=>c===code):READERS.filter(([c])=>D.some(it=>it.resp.some(r=>r.code===c)));
   const agTable=`<table style="margin-bottom:12px"><tr><th>Layer 2a 높은 세트 = 판독자 평균 점수 높은 세트</th><th>전체</th><th>큰 차이 문항</th><th>랜덤 문항</th></tr>
     ${who.map(([c,l])=>`<tr><td>${esc(l)}</td>${cell(agr(c))}${cell(agr(c,'large'))}${cell(agr(c,'random'))}</tr>`).join('')}
@@ -120,7 +120,7 @@ function render(){
     <div class="grid"><figure class="tile q"><div class="box"><img loading="lazy" src="${im(it.query_img,'thumb')}" data-img="${it.query_img}" data-cap="기준 · ${esc(it.query)}"></div><div class="qcap" title="${esc(it.query)}">기준 · ${esc(it.query)}</div></figure>
     <div class="sl">${it.slides.map((s,i)=>`<figure class="tile"><div class="box"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} rank ${s.rank} · ${s.id}`)}"></div>
       <div class="chip ${cls(s.system)}" title="${esc(s.id)}"><span>${i+1} · ${esc(s.system)}</span><b>r${s.rank}</b></div>
-      <div class="scs">${rs.map(r=>`<span class="sc v${r.s[s.img]||0}" title="${esc(r.reader)}">${r.s[s.img]||'–'}</span>`).join('')}</div></figure>`).join('')}</div></div>${rt}</section>`;}).join('');
+      <div class="scs">${rs.map(r=>`<span class="sc v${r.s[s.img]||0}" title="${esc(r.reader)}">${r.s[s.img]||'-'}</span>`).join('')}</div></figure>`).join('')}</div></div>${rt}</section>`;}).join('');
 }
 const list_=document.getElementById('list');
 document.addEventListener('click',e=>{const t=e.target.closest('img[data-img]');if(!t)return;const id=t.dataset.img;

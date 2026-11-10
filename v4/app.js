@@ -1,4 +1,4 @@
-/* PathRet blinded reader study v4 — per-slide 1-5 similarity rating.
+/* PathRet blinded reader study v4 - per-slide 1-5 similarity rating.
    Knows only anonymous image IDs; no system names, scores or ranks. */
 (() => {
   "use strict";
