@@ -1,7 +1,7 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reader Study Admin v4</title>
+<title>Reader Study Admin</title>
 <style>
 :root{--bg:#f2f2f2;--s:#fff;--l:#d8d8d8;--t:#1c1c1c;--m:#666;--ok:#1f7a45;--no:#b3261e;--hi:#2b4c7e;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--s:#262626;--l:#3e3e3e;--t:#eee;--m:#aaa;--ok:#7bc896;--no:#f08b84;--hi:#8fb0e0;color-scheme:dark}}
@@ -33,9 +33,9 @@ dialog .pp{display:flex;gap:6px;margin-top:6px}dialog .pp img{width:22vw;max-wid
 @media (max-width:1100px){.sl{grid-template-columns:repeat(5,minmax(0,1fr))}}@media (max-width:700px){.grid{grid-template-columns:1fr}.grid .q{max-width:240px}}
 </style></head><body>
 <div id="gate" style="min-height:70vh;display:grid;place-items:center"><form id="gf" style="background:var(--s);border:1px solid var(--l);border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:10px;width:min(360px,100%)">
-<b style="font-size:16px">연구자 결과 페이지 (v4)</b><span class="muted" style="font-size:13px">관리자 비밀번호를 입력하세요.</span>
+<b style="font-size:16px">연구자 결과 페이지</b><span class="muted" style="font-size:13px">관리자 비밀번호를 입력하세요.</span>
 <input id="gpw" type="password" autocomplete="current-password" required><button>열기</button><span id="gerr" style="color:var(--no);font-size:13px"></span></form></div>
-<div id="app" hidden><header><h1>Reader Study v4 결과 (언블라인드)</h1><span class="warn">⚠ 연구자 전용 · 병리의에게 공유 금지</span>
+<div id="app" hidden><header><h1>Reader Study 결과 (언블라인드)</h1><span class="warn">⚠ 연구자 전용 · 병리의에게 공유 금지</span>
 <label>판독자 <select id="fRd"><option value="">전체</option></select></label>
 <label>구성 <select id="fHalf"><option value="">전체</option><option value="large">큰 차이</option><option value="random">랜덤</option></select></label>
 <label>시스템 <select id="fSys"><option value="">전체</option></select></label>
