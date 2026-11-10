@@ -161,8 +161,9 @@
     const first = S.order.findIndex((id) => !complete(id));
     if (first === -1) { S.pos = S.order.length - 1; showDone(); return; }
     S.pos = first;
-    if (ratedSlides() === 0 && !store.get(`${P}intro_${code}`, false)) show("screen-intro");
-    else enterStudy();
+    // always open on the instructions; the button says whether this is a fresh start or a resume
+    $("#intro-start").textContent = ratedSlides() ? `이어서 평가하기 (문항 ${S.pos + 1}부터)` : "평가 시작";
+    show("screen-intro");
   }
 
   function enterStudy() { store.set(`${P}intro_${S.code}`, true); show("screen-study"); renderItem(); }
@@ -448,7 +449,7 @@
   // ── wiring ─────────────────────────────────────────
   $("#login-form").addEventListener("submit", (e) => { e.preventDefault(); login($("#login-code").value); });
   $("#intro-start").addEventListener("click", enterStudy);
-  $("#btn-help").addEventListener("click", () => { commitTime(); show("screen-intro"); });
+  $("#btn-help").addEventListener("click", () => { commitTime(); $("#intro-start").textContent = "평가로 돌아가기"; show("screen-intro"); });
   $("#btn-next").addEventListener("click", next);
   $("#btn-prev").addEventListener("click", () => go(S.pos - 1));
   $("#btn-list").addEventListener("click", openList);
