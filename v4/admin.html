@@ -126,7 +126,7 @@ function render(){
     return `<section class="card"><div class="ch"><b>#${it.seq}</b><span>${esc(it.project)} · ${esc(it.diagnosis)}</span>
     <span class="tag c1">${esc(a.name)} · L2a ${a.l2a.toFixed(4)}${pref===a?' ★':''}${lb(a)}</span><span class="tag c2">${esc(b.name)} · L2a ${b.l2a.toFixed(4)}${pref===b?' ★':''}${lb(b)}</span><span class="tag">|ΔL2a| ${it.delta.toFixed(4)}</span>${hb?`<span class="tag">|ΔL2b| ${Math.abs(a.l2b-b.l2b).toFixed(4)}</span>`:''}<span class="tag">item ${it.id}</span></div>
     <div class="grid"><figure class="tile q"><div class="box"><img loading="lazy" src="${im(it.query_img,'thumb')}" data-img="${it.query_img}" data-cap="기준 · ${esc(it.query)}"></div><div class="qcap" title="${esc(it.query)}">기준 · ${esc(it.query)}</div></figure>
-    <div class="sl">${it.slides.map((s,i)=>`<figure class="tile"><div class="box"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} rank ${s.rank} · ${s.id}`)}"></div>
+    <div class="sl">${it.slides.map((s,i)=>`<figure class="tile"><div class="box"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} top-1 · ${s.id}`)}"></div>
       <div class="chip ${cls(s.system)}" title="${esc(s.id)}"><span>${i+1} · ${esc(s.system)}</span><b>${(()=>{const x=it.systems.find(y=>y.name===s.system);return `L2a ${x.l2a.toFixed(3)}${Number.isFinite(x.l2b)?` · L2b ${x.l2b.toFixed(3)}`:''}`;})()}</b></div>
       <div class="scs">${rs.map(r=>`<span class="sc v${r.s[s.img]||0}" title="${esc(r.reader)}">${r.s[s.img]||'-'}</span>`).join('')}</div></figure>`).join('')}</div></div>${rt}</section>`;}).join('');
 }
