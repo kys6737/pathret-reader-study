@@ -84,7 +84,9 @@ function summary(){
     if(Number.isFinite(a.l2b)){const db=a.l2b-b.l2b;if(da===0)agreeB[2]++;else if(Math.sign(da)===Math.sign(db))agreeB[0]++;else agreeB[1]++;}}
   const half=h=>{const v=R.filter(x=>x.it.half===h).map(x=>x.v);return `${v.length}개 · 평균 ${f2(mean(v))}`;};
   // agreement table: per reader x (all / large / random). decisive = set means differ; ties reported separately
-  const agr=(cd,h,mk='l2a')=>{const o={k:0,n:0,t:0};for(const it of D){if(h&&it.half!==h)continue;for(const r of it.resp){if(cd&&r.code!==cd)continue;
+  const ds=D.map(it=>it.delta).sort((x,y)=>x-y),t1=ds[Math.floor(ds.length/3)],t2=ds[Math.floor(2*ds.length/3)];
+  const tb=it=>it.delta<t1?'lo':it.delta<t2?'mid':'hi';
+  const agr=(cd,h,mk='l2a')=>{const o={k:0,n:0,t:0};for(const it of D){if(h&&tb(it)!==h)continue;for(const r of it.resp){if(cd&&r.code!==cd)continue;
       const m={};for(const s of it.slides){const v=r.s[s.img];if(v)(m[s.system]??=[]).push(v);}
       if(!it.systems.every(x=>(m[x.name]||[]).length===it.slides.filter(s=>s.system===x.name).length))continue;
       const [a,b]=it.systems,da=mean(m[a.name])-mean(m[b.name]);if(!Number.isFinite(a[mk])||!Number.isFinite(b[mk]))continue;
@@ -92,12 +94,12 @@ function summary(){
   const cell=o=>{if(!o.n&&!o.t)return '<td class="muted">-</td>';const [lo,hi]=wilson(o.k,o.n);
     return `<td>${o.n?`<b>${(100*o.k/o.n).toFixed(1)}%</b> <span class="muted">${o.k}/${o.n} · CI ${(100*lo).toFixed(0)}-${(100*hi).toFixed(0)}% · p=${binom(o.k,o.n).toFixed(3)}</span>`:'-'}${o.t?` <span class="muted">· 동점 ${o.t}</span>`:''}</td>`;};
   const who=code?READERS.filter(([c])=>c===code):READERS.filter(([c])=>D.some(it=>it.resp.some(r=>r.code===c)));
-  const agTab=(mk,lab)=>`<table style="margin-bottom:12px"><tr><th>${lab} 높은 슬라이드 = 판독자 점수 높은 슬라이드</th><th>일치율</th></tr>
-    ${who.map(([c,l])=>`<tr><td>${esc(l)}</td>${cell(agr(c,'',mk))}</tr>`).join('')}
-    ${!code&&who.length>1?`<tr><td><b>전체 판독자</b></td>${cell(agr('','',mk))}</tr>`:''}</table>`;
+  const agTab=(mk,lab)=>`<table style="margin-bottom:12px"><tr><th>${lab} 높은 슬라이드 = 판독자 점수 높은 슬라이드</th><th>전체</th><th>|ΔL2a| 하위 1/3</th><th>중간 1/3</th><th>상위 1/3</th></tr>
+    ${who.map(([c,l])=>`<tr><td>${esc(l)}</td>${cell(agr(c,'',mk))}${cell(agr(c,'lo',mk))}${cell(agr(c,'mid',mk))}${cell(agr(c,'hi',mk))}</tr>`).join('')}
+    ${!code&&who.length>1?`<tr><td><b>전체 판독자</b></td>${cell(agr('','',mk))}${cell(agr('','lo',mk))}${cell(agr('','mid',mk))}${cell(agr('','hi',mk))}</tr>`:''}</table>`;
   const hasB=D.some(it=>Number.isFinite(it.systems[0].l2b));
   const agTable=agTab('l2a','Layer 2a')+(hasB?agTab('l2b','Layer 2b'):'<div class="muted" style="margin-bottom:12px">Layer 2b 값이 아직 서버 키에 없습니다.</div>')+`
-    <div class="muted" style="font-size:12px;margin:-6px 0 12px">두 장을 모두 평가한 문항만 계산합니다. 일치율 = 일치 / (일치 + 불일치), 동점(두 슬라이드 점수가 같음)은 분모에서 빼고 따로 표시합니다. CI = Wilson 95% 신뢰구간, p = 50% 대비 이항검정(양측). 문항은 두 시스템 top-1의 Layer 2a 차이가 큰 순으로 골랐습니다.</div>`;
+    <div class="muted" style="font-size:12px;margin:-6px 0 12px">두 장을 모두 평가한 문항만 계산합니다. 일치율 = 일치 / (일치 + 불일치), 동점(두 슬라이드 점수가 같음)은 분모에서 빼고 따로 표시합니다. CI = Wilson 95% 신뢰구간, p = 50% 대비 이항검정(양측). 문항은 두 시스템 top-1의 Layer 2a 차이가 큰 순으로 골랐고, 구간은 그 차이(|ΔL2a|)의 3분위입니다 (${Number.isFinite(t1)?t1.toFixed(3):"-"}, ${Number.isFinite(t2)?t2.toFixed(3):"-"}).</div>`;
   sum.innerHTML=agTable+`<div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
   <table><tr><th>시스템</th><th>평가 수</th><th>평균 점수</th></tr>${st}</table>
   <table><tr><th>지표</th><th></th></tr>
@@ -125,7 +127,7 @@ function render(){
     <span class="tag c1">${esc(a.name)} · L2a ${a.l2a.toFixed(4)}${pref===a?' ★':''}${lb(a)}</span><span class="tag c2">${esc(b.name)} · L2a ${b.l2a.toFixed(4)}${pref===b?' ★':''}${lb(b)}</span><span class="tag">|ΔL2a| ${it.delta.toFixed(4)}</span>${hb?`<span class="tag">|ΔL2b| ${Math.abs(a.l2b-b.l2b).toFixed(4)}</span>`:''}<span class="tag">item ${it.id}</span></div>
     <div class="grid"><figure class="tile q"><div class="box"><img loading="lazy" src="${im(it.query_img,'thumb')}" data-img="${it.query_img}" data-cap="기준 · ${esc(it.query)}"></div><div class="qcap" title="${esc(it.query)}">기준 · ${esc(it.query)}</div></figure>
     <div class="sl">${it.slides.map((s,i)=>`<figure class="tile"><div class="box"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} rank ${s.rank} · ${s.id}`)}"></div>
-      <div class="chip ${cls(s.system)}" title="${esc(s.id)}"><span>${i+1} · ${esc(s.system)}</span><b>r${s.rank}</b></div>
+      <div class="chip ${cls(s.system)}" title="${esc(s.id)}"><span>${i+1} · ${esc(s.system)}</span><b>${(()=>{const x=it.systems.find(y=>y.name===s.system);return `L2a ${x.l2a.toFixed(3)}${Number.isFinite(x.l2b)?` · L2b ${x.l2b.toFixed(3)}`:''}`;})()}</b></div>
       <div class="scs">${rs.map(r=>`<span class="sc v${r.s[s.img]||0}" title="${esc(r.reader)}">${r.s[s.img]||'-'}</span>`).join('')}</div></figure>`).join('')}</div></div>${rt}</section>`;}).join('');
 }
 const list_=document.getElementById('list');
