@@ -21,7 +21,7 @@
   };
   const P = "rs4_";   // storage prefix, separate from the v2 study
 
-  const SCALE = [[1, "유사하지 않음"], [2, "약간 유사함"], [3, "유사함"], [4, "매우 유사함"], [5, "임상적으로 구별하기 어려움"]];
+  const SCALE = [[1, "전혀 유사하지 않음", "주된 성장 패턴과 세포형태가 다름"], [2, "약간 유사함", "일부 특징만 공통이고 주된 패턴은 다름"], [3, "어느 정도 유사함", "주된 패턴은 비슷하나 세포/핵형태/밀도/성장 패턴 비율에 뚜렷한 차이 있음"], [4, "매우 유사함", "주요 특징이 대부분 일치하고 경미한 차이만 있음"], [5, "거의 동일함", "형태적으로 구별하기 어려움"]];
 
   const S = {
     code: null, items: {}, itemIds: [], slides: {}, order: [], pos: 0, cur: 0,
@@ -265,10 +265,10 @@
     const nr = nRated(it.id), nt = it.slides.length;
     $("#iprog-text").textContent = `${nr} / ${nt} 평가`;
     $("#iprog-fill").style.width = `${(100 * nr) / nt}%`;
-    $("#scores").replaceChildren(...SCALE.map(([v, label]) =>
+    $("#scores").replaceChildren(...SCALE.map(([v, label, desc]) =>
       el("button", { type: "button", class: "score", "aria-pressed": String(sc[id] === v),
                      onclick: () => rate(v) },
-        el("b", {}, String(v)), el("span", {}, label))));
+        el("b", {}, String(v)), el("span", {}, label), el("small", { class: "sdesc" }, desc))));
     const ok = complete(it.id), left = it.slides.length - nRated(it.id);
     $("#btn-next").disabled = !ok;
     $("#btn-next").textContent = S.pos === S.order.length - 1 ? "마치기" : "다음 문항 →";

@@ -202,7 +202,8 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 .scores { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 12px 0; }
 .score { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; line-height: 1.25; }
 .score b { font-size: 20px; }
-.score span { font-size: 12.5px; text-align: center; }
+.score span { font-size: 12.5px; text-align: center; font-weight: 600; }
+.score .sdesc { font-size: 11px; text-align: center; color: var(--muted); line-height: 1.3; }
 .score[aria-pressed="true"] { border-color: var(--sel); background: var(--sel-bg); box-shadow: inset 0 0 0 1px var(--sel); }
 .scale { border-collapse: collapse; margin: 6px 0 12px; }
 .scale th, .scale td { padding: 4px 12px; border-bottom: 1px solid var(--line); text-align: left; }
