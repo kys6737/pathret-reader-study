@@ -16,12 +16,13 @@ table{border-collapse:collapse}td,th{padding:3px 10px;text-align:right;border-bo
 .ch{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:8px}.ch b{font-size:15px}.tag{font-size:12px;padding:1px 8px;border:1px solid var(--l);border-radius:99px;color:var(--m)}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:14px;align-items:start;max-width:960px}
 .tile{margin:0;min-width:0}.tile .box{aspect-ratio:4/3;width:100%;background:#fff;border:1px solid var(--l);border-radius:4px;display:grid;place-items:center;overflow:hidden;cursor:zoom-in}
+.tile.pref .box{border:2px solid var(--hi);box-shadow:0 0 0 1px var(--hi)}
 .tile .box img{width:100%;height:100%;object-fit:contain;display:block}
 .qcap{font-size:11.5px;color:var(--m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
 .sl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .chip{display:flex;justify-content:space-between;gap:4px;font-size:11px;line-height:1.3;margin-top:4px;padding:1px 5px;border-radius:3px;white-space:nowrap;overflow:hidden}
-.chip span{overflow:hidden;text-overflow:ellipsis}.c1{background:#e3eaf6;color:#23406e}.c2{background:#f8e7d5;color:#7a4410}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .c1{background:#26344a;color:#b9cdf0}:root:not([data-theme="light"]) .c2{background:#4a3424;color:#f0cba6}}
+.chip span{overflow:hidden;text-overflow:ellipsis}.c1{}.c2{}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .c1{}:root:not([data-theme="light"]) .c2{}}
 .scs{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;min-height:20px}
 .sc{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 4px;border-radius:4px;font-size:12px;font-weight:700;color:#fff}
 .sc.v1{background:#b3261e}.sc.v2{background:#d9822b}.sc.v3{background:#a0a0a0}.sc.v4{background:#5aa36f}.sc.v5{background:#1f7a45}.sc.v0{background:transparent;color:var(--m);border:1px dashed var(--l)}
@@ -40,7 +41,7 @@ dialog .pp{display:flex;gap:6px;margin-top:6px}dialog .pp img{width:22vw;max-wid
 <label hidden>구성 <select id="fHalf"><option value="">전체</option><option value="large">큰 차이</option><option value="random">랜덤</option></select></label>
 <label>시스템 <select id="fSys"><option value="">전체</option></select></label>
 <label>검색 <input id="fTxt" placeholder="TCGA ID / item ID"></label><span id="cnt" class="muted"></span><button id="reload">새로고침</button></header>
-<main><div class="sum" id="prog"></div><div class="legend">점수 색: <span class="sc v1">1</span><span class="sc v2">2</span><span class="sc v3">3</span><span class="sc v4">4</span><span class="sc v5">5</span><span class="sc v0">-</span> 미평가 · ★ = Layer 2a가 더 높은 슬라이드 · ◆ = Layer 2b가 더 높은 슬라이드 · 각 슬라이드는 해당 기법의 top-1</div><div class="sum" id="sum"></div><div id="list"></div></main></div><dialog id="dlg"></dialog>
+<main><div class="sum" id="prog"></div><div class="legend">점수 색: <span class="sc v1">1</span><span class="sc v2">2</span><span class="sc v3">3</span><span class="sc v4">4</span><span class="sc v5">5</span><span class="sc v0">-</span> 미평가 · 테두리·★ = Layer 2a가 더 높은 슬라이드 · ◆ = Layer 2b가 더 높은 슬라이드 · 각 슬라이드는 해당 기법의 top-1</div><div class="sum" id="sum"></div><div id="list"></div></main></div><dialog id="dlg"></dialog>
 <script>
 const API='https://osqcbtjzmzgxiwxxoafm.supabase.co/rest/v1/rpc/rs4_admin_dump',KEY='sb_publishable_KM6kIPtPfooQulEE_PnO4A_2O3c-xBw';
 let D=[],READERS=[];
@@ -126,7 +127,7 @@ function render(){
     return `<section class="card"><div class="ch"><b>#${it.seq}</b><span>${esc(it.project)} · ${esc(it.diagnosis)}</span>
     <span class="tag c1">${esc(a.name)} · L2a ${a.l2a.toFixed(4)}${pref===a?' ★':''}${lb(a)}</span><span class="tag c2">${esc(b.name)} · L2a ${b.l2a.toFixed(4)}${pref===b?' ★':''}${lb(b)}</span><span class="tag">|ΔL2a| ${it.delta.toFixed(4)}</span>${hb?`<span class="tag">|ΔL2b| ${Math.abs(a.l2b-b.l2b).toFixed(4)}</span>`:''}<span class="tag">item ${it.id}</span></div>
     <div class="grid"><figure class="tile q"><div class="box"><img loading="lazy" src="${im(it.query_img,'thumb')}" data-img="${it.query_img}" data-cap="기준 · ${esc(it.query)}"></div><div class="qcap" title="${esc(it.query)}">기준 · ${esc(it.query)}</div></figure>
-    <div class="sl">${it.slides.map((s,i)=>`<figure class="tile"><div class="box"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} top-1 · ${s.id}`)}"></div>
+    <div class="sl">${it.slides.map((s,i)=>`<figure class="tile${s.system===pref.name?' pref':''}"><div class="box"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} top-1 · ${s.id}`)}"></div>
       <div class="chip ${cls(s.system)}" title="${esc(s.id)}"><span>${i+1} · ${esc(s.system)}</span><b>${(()=>{const x=it.systems.find(y=>y.name===s.system);return `L2a ${x.l2a.toFixed(3)}${Number.isFinite(x.l2b)?` · L2b ${x.l2b.toFixed(3)}`:''}`;})()}</b></div>
       <div class="scs">${rs.map(r=>`<span class="sc v${r.s[s.img]||0}" title="${esc(r.reader)}">${r.s[s.img]||'-'}</span>`).join('')}</div></figure>`).join('')}</div></div>${rt}</section>`;}).join('');
 }
