@@ -34,7 +34,7 @@ dialog .pp{display:flex;gap:6px;margin-top:6px}dialog .pp img{width:24vw;max-wid
 <label>시스템 <select id="fSys"><option value="">전체</option></select></label>
 <label>진단 <select id="fDx"><option value="">전체</option></select></label>
 <label>|ΔL2a| <select id="fBin"><option value="">전체</option><option>small</option><option>medium</option><option>large</option></select></label>
-<label>응답 <select id="fResp"><option value="">전체</option><option value="has">응답 있음</option><option value="agree1">Q1 일치</option><option value="dis1">Q1 불일치</option><option value="agree2">Q2 일치</option><option value="dis2">Q2 불일치</option></select></label>
+<label>응답 <select id="fResp"><option value="">전체</option><option value="has">응답 있음</option><option value="agree1">Q1 일치</option><option value="dis1">Q1 불일치</option><option value="agree2">Q2 일치</option><option value="dis2">Q2 불일치</option><option value="tagree1">Q1 ↔ L2a′ 일치</option><option value="tdis1">Q1 ↔ L2a′ 불일치</option><option value="tagree2">Q2 ↔ L2a′ 일치</option><option value="tdis2">Q2 ↔ L2a′ 불일치</option><option value="flip">L2a와 L2a′ 선호가 반대</option></select></label>
 <label>순서 <select id="fOrd"><option value="">문항 번호순</option></select></label>
 <label>검색 <input id="fTxt" placeholder="TCGA ID / item ID"></label><span id="cnt" class="muted"></span><button id="reload" style="font:inherit;padding:4px 10px;border:1px solid var(--l);border-radius:5px;background:var(--s);color:var(--t);cursor:pointer">새로고침</button></header>
 <main><div class="sum" id="prog"></div><div class="sum" id="sum"></div><div id="list"></div></main>
@@ -47,7 +47,7 @@ async function load(pw){
   const j=await r.json(); if(!r.ok) throw new Error(j.message||r.status); if(j===null) throw new Error('invalid admin password');
   const label=Object.fromEntries(j.readers.map(x=>[x.code,x.label||x.code]));
   const by={}; for(const x of j.responses){(by[x.item_id]??=[]).push({reader:label[x.reader]||x.reader,code:x.reader,q1:x.q1||'',q1_conf:x.q1_conf||'',q2:x.q2||'',q2_conf:x.q2_conf||'',sec:Math.round((x.time_ms||0)/1000),at:x.updated_at});}
-  D=j.key.sort((a,b)=>a.seq-b.seq).map(it=>({...it,prefB:Number.isFinite(it.A.l2b)?(it.A.l2b>it.B.l2b?'A':'B'):'',resp:(by[it.id]||[]).filter(r=>r.q1||r.q2)}));
+  D=j.key.sort((a,b)=>a.seq-b.seq).map(it=>({...it,prefB:Number.isFinite(it.A.l2b)?(it.A.l2b>it.B.l2b?'A':'B'):'',prefT:Number.isFinite(it.A.l2at)&&Number.isFinite(it.B.l2at)?(it.A.l2at>it.B.l2at?'A':'B'):'',resp:(by[it.id]||[]).filter(r=>r.q1||r.q2)}));
   window.EXTRA_READERS=j.readers.map(x=>[x.code,x.label||x.code]);
   // progress per reader
   const prog=j.readers.map(rd=>{const rs=j.responses.filter(x=>x.reader===rd.code);const done=rs.filter(x=>x.q1&&x.q2).length;
@@ -72,31 +72,31 @@ function verdict(it,ans,p=it.pref){if(!p||(ans!=='A'&&ans!=='B'))return '<span c
 
 function summary(){
   const by={};
-  for(const it of D)for(const r of it.resp){const o=by[r.reader]??={n:0,q1:[0,0],q2:[0,0],b1:[0,0],b2:[0,0],q1o:{both_yes:0,both_no:0},q2o:{both_yes:0,both_no:0}};o.n++;
-    for(const q of['q1','q2']){const a=r[q];if(a==='A'||a==='B'){o[q][1]++;if(a===it.pref)o[q][0]++;if(it.prefB){const b='b'+q[1];o[b][1]++;if(a===it.prefB)o[b][0]++;}}else if(a)o[q+'o'][a]++;}}
+  for(const it of D)for(const r of it.resp){const o=by[r.reader]??={n:0,q1:[0,0],q2:[0,0],b1:[0,0],b2:[0,0],t1:[0,0],t2:[0,0],q1o:{both_yes:0,both_no:0},q2o:{both_yes:0,both_no:0}};o.n++;
+    for(const q of['q1','q2']){const a=r[q];if(a==='A'||a==='B'){o[q][1]++;if(a===it.pref)o[q][0]++;if(it.prefB){const b='b'+q[1];o[b][1]++;if(a===it.prefB)o[b][0]++;}if(it.prefT){const t='t'+q[1];o[t][1]++;if(a===it.prefT)o[t][0]++;}}else if(a)o[q+'o'][a]++;}}
   const pct=([k,n])=>n?`${k}/${n} (${(100*k/n).toFixed(1)}%)`:'-';
-  const rows=Object.entries(by).map(([r,o])=>`<tr><td>${esc(r)}</td><td>${o.n}</td><td>${pct(o.q1)}</td><td>${pct(o.b1)}</td><td>${o.q1o.both_yes}/${o.q1o.both_no}</td><td>${pct(o.q2)}</td><td>${pct(o.b2)}</td><td>${o.q2o.both_yes}/${o.q2o.both_no}</td></tr>`).join('');
+  const rows=Object.entries(by).map(([r,o])=>`<tr><td>${esc(r)}</td><td>${o.n}</td><td>${pct(o.q1)}</td><td>${pct(o.t1)}</td><td>${pct(o.b1)}</td><td>${o.q1o.both_yes}/${o.q1o.both_no}</td><td>${pct(o.q2)}</td><td>${pct(o.t2)}</td><td>${pct(o.b2)}</td><td>${o.q2o.both_yes}/${o.q2o.both_no}</td></tr>`).join('');
   // per-system win rate in Q1 (decisive answers)
   const w={};for(const it of D)for(const r of it.resp){if(r.q1!=='A'&&r.q1!=='B')continue;const win=it[r.q1].system,lose=it[r.q1==='A'?'B':'A'].system;(w[win]??={w:0,n:0}).w++;w[win].n++;(w[lose]??={w:0,n:0}).n++;}
   const wr=Object.entries(w).sort((a,b)=>b[1].w/b[1].n-a[1].w/a[1].n).map(([s,o])=>`${esc(s)} ${o.w}/${o.n}`).join(' · ');
-  sum.innerHTML=rows?`<table><tr><th>판독자</th><th>응답 문항</th><th>Q1 ↔ Layer2a 일치</th><th>Q1 ↔ Layer2b 일치</th><th>Q1 둘다맞음/둘다틀림</th><th>Q2 ↔ Layer2a 일치</th><th>Q2 ↔ Layer2b 일치</th><th>Q2 둘다유용/둘다아님</th></tr>${rows}</table><div class="muted" style="margin-top:6px">Q1 시스템별 선택률(이긴 횟수/비교된 횟수): ${wr}</div>`:'<span class="muted">아직 응답이 없습니다. 판독이 시작되면 새로고침을 눌러 주세요.</span>';
+  sum.innerHTML=rows?`<table><tr><th>판독자</th><th>응답 문항</th><th>Q1 ↔ Layer2a 일치</th><th>Q1 ↔ Layer2a′(종양) 일치</th><th>Q1 ↔ Layer2b 일치</th><th>Q1 둘다맞음/둘다틀림</th><th>Q2 ↔ Layer2a 일치</th><th>Q2 ↔ Layer2a′(종양) 일치</th><th>Q2 ↔ Layer2b 일치</th><th>Q2 둘다유용/둘다아님</th></tr>${rows}</table><div class="muted" style="margin-top:6px">Q1 시스템별 선택률(이긴 횟수/비교된 횟수): ${wr}</div>`:'<span class="muted">아직 응답이 없습니다. 판독이 시작되면 새로고침을 눌러 주세요.</span>';
 }
 function setHtml(it,s){
   const x=it[s];
-  return `<div class="set ${it.pref===s?'pref':''}"><div class="sh"><b>Set ${s} · ${esc(x.system)}</b><span>L2a ${x.l2a.toFixed(4)}${it.pref===s?' ★':''}${Number.isFinite(x.l2b)?` · L2b ${x.l2b.toFixed(4)}${it.prefB===s?' ◆':''}`:''}</span></div>
+  return `<div class="set ${it.pref===s?'pref':''}"><div class="sh"><b>Set ${s} · ${esc(x.system)}</b><span>L2a ${x.l2a.toFixed(4)}${it.pref===s?' ★':''}${Number.isFinite(x.l2at)?` · L2a′ ${x.l2at.toFixed(4)}${it.prefT===s?' ▲':''}${x.nt<5?` <span class="muted">(종양 ${x.nt}/5장)</span>`:''}`:` · L2a′ <span class="muted">-</span>`}${Number.isFinite(x.l2b)?` · L2b ${x.l2b.toFixed(4)}${it.prefB===s?' ◆':''}`:''}</span></div>
   <div class="sl">${x.slides.map((sl,i)=>`<figure><img loading="lazy" src="${im(sl.img,'thumb')}" data-img="${sl.img}" data-cap="${esc(`${s}-${i+1} · ${x.system} rank ${sl.rank} · ${sl.id}`)}"><figcaption>${s}-${i+1} · rank ${sl.rank}<br>${esc(sl.id)}</figcaption></figure>`).join('')}</div></div>`;
 }
 function render(){
   const fs=fSys.value,fd=fDx.value,fb=fBin.value,fr=fResp.value,ft=fTxt.value.trim().toUpperCase();
   const list=D.filter(it=>(!fs||it.A.system===fs||it.B.system===fs)&&(!fd||it.diagnosis===fd)&&(!fb||it.bin===fb)
     &&(!ft||(it.id+' '+it.query+' '+it.A.slides.map(s=>s.id).join(' ')+' '+it.B.slides.map(s=>s.id).join(' ')).toUpperCase().includes(ft))
-    &&(!fr||(fr==='has'?it.resp.length:it.resp.some(r=>{const q=fr.endsWith('1')?r.q1:r.q2;return (q==='A'||q==='B')&&((q===it.pref)===fr.startsWith('agree'));}))));
+    &&(!fr||(fr==='has'?it.resp.length:fr==='flip'?(it.prefT&&it.prefT!==it.pref):it.resp.some(r=>{const q=fr.endsWith('1')?r.q1:r.q2,t=fr[0]==='t',p=t?it.prefT:it.pref,f=t?fr.slice(1):fr;return p&&(q==='A'||q==='B')&&((q===p)===f.startsWith('agree'));}))));
   const fo=fOrd.value; if(fo&&ORD[fo]) list.sort((a,b)=>ORD[fo][a.id]-ORD[fo][b.id]); else list.sort((a,b)=>a.seq-b.seq);
   cnt.textContent=`${list.length} / ${D.length} 문항`;
   document.getElementById('list').innerHTML=list.map(it=>`<section class="card"><div class="ch"><b>${fo&&ORD[fo]?`Q${ORD[fo][it.id]} <span class="muted" style="font-weight:400;font-size:12px">(판독자 화면 번호)</span> · `:''}#${it.seq}</b><span class="tag">item ${it.id}</span><span>${esc(it.project)} · ${esc(it.diagnosis)}</span>
-  <span class="tag">|ΔL2a| ${it.delta.toFixed(4)} (${it.bin})</span><span class="tag">Layer 2a 선호 ★: ${it.pref} (${esc(it[it.pref].system)})</span>${it.prefB?`<span class="tag">Layer 2b 선호 ◆: ${it.prefB} (${esc(it[it.prefB].system)}) · |ΔL2b| ${Math.abs(it.A.l2b-it.B.l2b).toFixed(4)}</span>`:''}</div>
+  <span class="tag">|ΔL2a| ${it.delta.toFixed(4)} (${it.bin})</span><span class="tag">Layer 2a 선호 ★: ${it.pref} (${esc(it[it.pref].system)})</span>${it.prefT?`<span class="tag">Layer 2a′ 선호 ▲: ${it.prefT} (${esc(it[it.prefT].system)}) · |ΔL2a′| ${Math.abs(it.A.l2at-it.B.l2at).toFixed(4)}${it.prefT!==it.pref?' · <b>L2a와 반대</b>':''}</span>`:'<span class="tag">Layer 2a′ 없음 (Query 종양 윤곽 없음)</span>'}${it.prefB?`<span class="tag">Layer 2b 선호 ◆: ${it.prefB} (${esc(it[it.prefB].system)}) · |ΔL2b| ${Math.abs(it.A.l2b-it.B.l2b).toFixed(4)}</span>`:''}</div>
   <div class="grid"><div class="q"><div class="muted" style="font-size:12px">Query · ${esc(it.query)}</div><img loading="lazy" src="${im(it.query_img,'thumb')}" data-img="${it.query_img}" data-cap="Query · ${esc(it.query)}" style="cursor:zoom-in"></div>${setHtml(it,'A')}${setHtml(it,'B')}</div>
-  ${it.resp.length?`<table class="resp"><tr><th>판독자</th><th>화면 번호</th><th>Q1 형태</th><th>확신</th><th>Layer2a</th><th>Layer2b</th><th>Q2 유용성</th><th>확신</th><th>Layer2a</th><th>Layer2b</th><th>시간</th></tr>${it.resp.map(r=>`<tr><td>${esc(r.reader)}</td><td>${r.pos?'Q'+r.pos:'-'}</td><td>${L[r.q1]}${sysName(it,r.q1)?` (${esc(sysName(it,r.q1))})`:''}</td><td>${r.q1_conf||'-'}</td><td>${verdict(it,r.q1)}</td><td>${verdict(it,r.q1,it.prefB)}</td><td>${L[r.q2]}${sysName(it,r.q2)?` (${esc(sysName(it,r.q2))})`:''}</td><td>${r.q2_conf||'-'}</td><td>${verdict(it,r.q2)}</td><td>${verdict(it,r.q2,it.prefB)}</td><td>${r.sec}s</td></tr>`).join('')}</table>`:'<div class="muted" style="margin-top:6px">응답 없음</div>'}</section>`).join('');
+  ${it.resp.length?`<table class="resp"><tr><th>판독자</th><th>화면 번호</th><th>Q1 형태</th><th>확신</th><th>Layer2a</th><th>Layer2a′</th><th>Layer2b</th><th>Q2 유용성</th><th>확신</th><th>Layer2a</th><th>Layer2a′</th><th>Layer2b</th><th>시간</th></tr>${it.resp.map(r=>`<tr><td>${esc(r.reader)}</td><td>${r.pos?'Q'+r.pos:'-'}</td><td>${L[r.q1]}${sysName(it,r.q1)?` (${esc(sysName(it,r.q1))})`:''}</td><td>${r.q1_conf||'-'}</td><td>${verdict(it,r.q1)}</td><td>${verdict(it,r.q1,it.prefT)}</td><td>${verdict(it,r.q1,it.prefB)}</td><td>${L[r.q2]}${sysName(it,r.q2)?` (${esc(sysName(it,r.q2))})`:''}</td><td>${r.q2_conf||'-'}</td><td>${verdict(it,r.q2)}</td><td>${verdict(it,r.q2,it.prefT)}</td><td>${verdict(it,r.q2,it.prefB)}</td><td>${r.sec}s</td></tr>`).join('')}</table>`:'<div class="muted" style="margin-top:6px">응답 없음</div>'}</section>`).join('');
 }
 document.addEventListener('click',e=>{const t=e.target.closest('img[data-img]');if(!t)return;const id=t.dataset.img;
   dlg.innerHTML=`<div style="color:#fff;margin-bottom:4px">${t.dataset.cap}</div><img src="${im(id,'thumb')}"><div class="pp">${[1,2,3,4].map(i=>`<img src="${im(id,'p'+i)}" onerror="this.remove()">`).join('')}</div>`;dlg.showModal();});
