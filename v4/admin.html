@@ -42,7 +42,7 @@ dialog .pp{display:flex;gap:6px;margin-top:6px}dialog .pp img{width:22vw;max-wid
 <label>L2a′ <select id="fFlip"><option value="">전체</option><option value="flip">L2a와 선호 반대</option><option value="same">L2a와 선호 같음</option></select></label>
 <label>시스템 <select id="fSys"><option value="">전체</option></select></label>
 <label>검색 <input id="fTxt" placeholder="TCGA ID / item ID"></label><span id="cnt" class="muted"></span><button id="reload">새로고침</button></header>
-<main><div class="sum" id="prog"></div><div class="legend">점수 색: <span class="sc v1">1</span><span class="sc v2">2</span><span class="sc v3">3</span><span class="sc v4">4</span><span class="sc v5">5</span><span class="sc v0">-</span> 미평가 · 테두리·★ = Layer 2a가 더 높은 슬라이드 · ▲ = Layer 2a′(종양 영역)가 더 높은 슬라이드 · ◆ = Layer 2b가 더 높은 슬라이드 · 각 슬라이드는 해당 기법의 top-1</div><div class="sum" id="sum"></div><div id="list"></div></main></div><dialog id="dlg"></dialog>
+<main><div class="sum" id="prog"></div><div class="legend">점수 색: <span class="sc v1">1</span><span class="sc v2">2</span><span class="sc v3">3</span><span class="sc v4">4</span><span class="sc v5">5</span><span class="sc v0">-</span> 미평가 · 테두리·★ = Layer 2a′(종양 영역)가 더 높은 슬라이드 · ▲ = 기존 Layer 2a(전체 영역)가 더 높은 슬라이드 · ◆ = Layer 2b가 더 높은 슬라이드 · 각 슬라이드는 해당 기법의 top-1</div><div class="sum" id="sum"></div><div id="list"></div></main></div><dialog id="dlg"></dialog>
 <script>
 const API='https://osqcbtjzmzgxiwxxoafm.supabase.co/rest/v1/rpc/rs4_admin_dump',KEY='sb_publishable_KM6kIPtPfooQulEE_PnO4A_2O3c-xBw';
 let D=[],READERS=[];
@@ -87,8 +87,9 @@ function summary(){
     if(Number.isFinite(a.l2b)){const db=a.l2b-b.l2b;if(da===0)agreeB[2]++;else if(Math.sign(da)===Math.sign(db))agreeB[0]++;else agreeB[1]++;}}
   const half=h=>{const v=R.filter(x=>x.it.half===h).map(x=>x.v);return `${v.length}개 · 평균 ${f2(mean(v))}`;};
   // agreement table: per reader x (all / large / random). decisive = set means differ; ties reported separately
-  const ds=D.map(it=>it.delta).sort((x,y)=>x-y),t1=ds[Math.floor(ds.length/3)],t2=ds[Math.floor(2*ds.length/3)];
-  const tb=it=>it.delta<t1?'lo':it.delta<t2?'mid':'hi';
+  const dT=it=>{const [a,b]=it.systems;return Number.isFinite(a.l2at)&&Number.isFinite(b.l2at)?Math.abs(a.l2at-b.l2at):it.delta;};
+  const ds=D.map(dT).sort((x,y)=>x-y),t1=ds[Math.floor(ds.length/3)],t2=ds[Math.floor(2*ds.length/3)];
+  const tb=it=>dT(it)<t1?'lo':dT(it)<t2?'mid':'hi';
   const agr=(cd,h,mk='l2a')=>{const o={k:0,n:0,t:0};for(const it of D){if(h&&tb(it)!==h)continue;for(const r of it.resp){if(cd&&r.code!==cd)continue;
       const m={};for(const s of it.slides){const v=r.s[s.img];if(v)(m[s.system]??=[]).push(v);}
       if(!it.systems.every(x=>(m[x.name]||[]).length===it.slides.filter(s=>s.system===x.name).length))continue;
@@ -97,22 +98,22 @@ function summary(){
   const cell=o=>{if(!o.n&&!o.t)return '<td class="muted">-</td>';const [lo,hi]=wilson(o.k,o.n);
     return `<td>${o.n?`<b>${(100*o.k/o.n).toFixed(1)}%</b> <span class="muted">${o.k}/${o.n} · CI ${(100*lo).toFixed(0)}-${(100*hi).toFixed(0)}% · p=${binom(o.k,o.n).toFixed(3)}</span>`:'-'}${o.t?` <span class="muted">· 동점 ${o.t}</span>`:''}</td>`;};
   const who=code?READERS.filter(([c])=>c===code):READERS.filter(([c])=>D.some(it=>it.resp.some(r=>r.code===c)));
-  const agTab=(mk,lab)=>`<table style="margin-bottom:12px"><tr><th>${lab} 높은 슬라이드 = 판독자 점수 높은 슬라이드</th><th>전체</th><th>|ΔL2a| 하위 1/3</th><th>중간 1/3</th><th>상위 1/3</th></tr>
+  const agTab=(mk,lab)=>`<table style="margin-bottom:12px"><tr><th>${lab} 높은 슬라이드 = 판독자 점수 높은 슬라이드</th><th>전체</th><th>|ΔL2a′| 하위 1/3</th><th>중간 1/3</th><th>상위 1/3</th></tr>
     ${who.map(([c,l])=>`<tr><td>${esc(l)}</td>${cell(agr(c,'',mk))}${cell(agr(c,'lo',mk))}${cell(agr(c,'mid',mk))}${cell(agr(c,'hi',mk))}</tr>`).join('')}
     ${!code&&who.length>1?`<tr><td><b>전체 판독자</b></td>${cell(agr('','',mk))}${cell(agr('','lo',mk))}${cell(agr('','mid',mk))}${cell(agr('','hi',mk))}</tr>`:''}</table>`;
   const hasB=D.some(it=>Number.isFinite(it.systems[0].l2b));
   const hasT=D.some(it=>Number.isFinite(it.systems[0].l2at));
-  const agTable=agTab('l2a','Layer 2a')+(hasT?agTab('l2at','Layer 2a′ (종양 영역)'):'<div class="muted" style="margin-bottom:12px">Layer 2a′ 값이 아직 서버 키에 없습니다.</div>')+(hasB?agTab('l2b','Layer 2b'):'<div class="muted" style="margin-bottom:12px">Layer 2b 값이 아직 서버 키에 없습니다.</div>')+`
-    <div class="muted" style="font-size:12px;margin:-6px 0 12px">두 장을 모두 평가한 문항만 계산합니다. 일치율 = 일치 / (일치 + 불일치), 동점(두 슬라이드 점수가 같음)은 분모에서 빼고 따로 표시합니다. CI = Wilson 95% 신뢰구간, p = 50% 대비 이항검정(양측). 문항은 두 시스템 top-1의 Layer 2a 차이가 큰 순으로 골랐고, 구간은 그 차이(|ΔL2a|)의 3분위입니다 (${Number.isFinite(t1)?t1.toFixed(3):"-"}, ${Number.isFinite(t2)?t2.toFixed(3):"-"}).</div>`;
+  const agTable=(hasT?agTab('l2at','<b>Layer 2a′ (종양 영역, 메인)</b>'):'<div class="muted" style="margin-bottom:12px">Layer 2a′ 값이 아직 서버 키에 없습니다.</div>')+agTab('l2a','Layer 2a (기존, 전체 영역)')+(hasB?agTab('l2b','Layer 2b'):'<div class="muted" style="margin-bottom:12px">Layer 2b 값이 아직 서버 키에 없습니다.</div>')+`
+    <div class="muted" style="font-size:12px;margin:-6px 0 12px">두 장을 모두 평가한 문항만 계산합니다. 일치율 = 일치 / (일치 + 불일치), 동점(두 슬라이드 점수가 같음)은 분모에서 빼고 따로 표시합니다. CI = Wilson 95% 신뢰구간, p = 50% 대비 이항검정(양측). 문항은 두 시스템 top-1의 기존 Layer 2a 차이가 큰 순으로 골랐습니다. 구간은 두 슬라이드의 Layer 2a′ 차이(|ΔL2a′|)의 3분위입니다 (${Number.isFinite(t1)?t1.toFixed(3):"-"}, ${Number.isFinite(t2)?t2.toFixed(3):"-"}).</div>`;
   sum.innerHTML=agTable+`<div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
   <table><tr><th>시스템</th><th>평가 수</th><th>평균 점수</th></tr>${st}</table>
   <table><tr><th>지표</th><th></th></tr>
   <tr><td>평가한 슬라이드</td><td>${R.length}</td></tr>
   <tr><td>점수 분포 1/2/3/4/5</td><td>${dist.join(' / ')}</td></tr>
-  <tr><td>슬라이드 점수 ↔ Layer 2a Spearman</td><td>${f2(spear(sets.map(x=>x[0]),sets.map(x=>x[1])))} (n=${sets.length})</td></tr>
-  <tr><td>문항별: 점수 높은 슬라이드 = Layer 2a 높은 슬라이드</td><td>${agree[0]} 일치 / ${agree[1]} 불일치 / ${agree[2]} 동점</td></tr>
   ${hasT?`<tr><td>슬라이드 점수 ↔ Layer 2a′ Spearman</td><td>${f2(spear(sets.filter(x=>Number.isFinite(x[3])).map(x=>x[3]),sets.filter(x=>Number.isFinite(x[3])).map(x=>x[1])))}</td></tr>
   <tr><td>문항별: 점수 높은 슬라이드 = Layer 2a′ 높은 슬라이드</td><td>${agreeT[0]} 일치 / ${agreeT[1]} 불일치 / ${agreeT[2]} 동점</td></tr>`:''}
+  <tr><td>슬라이드 점수 ↔ Layer 2a Spearman</td><td>${f2(spear(sets.map(x=>x[0]),sets.map(x=>x[1])))} (n=${sets.length})</td></tr>
+  <tr><td>문항별: 점수 높은 슬라이드 = Layer 2a 높은 슬라이드</td><td>${agree[0]} 일치 / ${agree[1]} 불일치 / ${agree[2]} 동점</td></tr>
   ${hasB?`<tr><td>슬라이드 점수 ↔ Layer 2b Spearman</td><td>${f2(spear(sets.map(x=>x[2]),sets.map(x=>x[1])))} (n=${sets.length})</td></tr>
   <tr><td>문항별: 점수 높은 슬라이드 = Layer 2b 높은 슬라이드</td><td>${agreeB[0]} 일치 / ${agreeB[1]} 불일치 / ${agreeB[2]} 동점</td></tr>`:''}</table></div>`;
 }
@@ -122,20 +123,21 @@ function render(){
   const list=D.filter(it=>(!ff||(ff==='flip')===flip(it))&&(!fh||it.half===fh)&&(!fs||it.systems.some(x=>x.name===fs))&&(!ft||(it.id+' '+it.query+' '+it.slides.map(s=>s.id).join(' ')).toUpperCase().includes(ft)));
   cnt.textContent=`${list.length} / ${D.length} 문항`;
   list_.innerHTML=list.map(it=>{const rs=it.resp.filter(r=>!code||r.code===code);const [a,b]=it.systems;const cls=k=>k===a.name?'c1':'c2';
-    const pref=a.l2a>b.l2a?a:b,hb=Number.isFinite(a.l2b),prefB=hb?(a.l2b>b.l2b?a:b):null;
+    const pref0=a.l2a>b.l2a?a:b,hb=Number.isFinite(a.l2b),prefB=hb?(a.l2b>b.l2b?a:b):null;
     const ht=Number.isFinite(a.l2at)&&Number.isFinite(b.l2at),prefT=ht?(a.l2at>b.l2at?a:b):null;
-    const lb=x=>(ht?` · L2a′ ${x.l2at.toFixed(4)}${prefT===x?' ▲':''}`:'')+(hb?` · L2b ${x.l2b.toFixed(4)}${prefB===x?' ◆':''}`:'');
+    const pref=prefT||pref0;
+    const lb=x=>(ht?`L2a′ ${x.l2at.toFixed(4)}${prefT===x?' ★':''} · `:'')+`L2a ${x.l2a.toFixed(4)}${pref0===x?' ▲':''}`+(hb?` · L2b ${x.l2b.toFixed(4)}${prefB===x?' ◆':''}`:'');
     const vd=(ma,mb,x,y)=>ma===mb?'<span class="muted">동점</span>':((ma>mb)===(x>y)?'<span style="color:var(--ok);font-weight:600">일치</span>':'<span style="color:var(--no);font-weight:600">불일치</span>');
     const m=(r,k)=>mean(it.slides.filter(s=>s.system===k&&r.s[s.img]).map(s=>r.s[s.img]));
-    const rt=rs.length?`<table class="rt"><tr><th>판독자</th><th>평가</th><th class="c1">${esc(a.name)} 점수</th><th class="c2">${esc(b.name)} 점수</th><th>Layer 2a와</th>${ht?'<th>Layer 2a′와</th>':''}${hb?'<th>Layer 2b와</th>':''}<th>시간</th></tr>${rs.map(r=>{
+    const rt=rs.length?`<table class="rt"><tr><th>판독자</th><th>평가</th><th class="c1">${esc(a.name)} 점수</th><th class="c2">${esc(b.name)} 점수</th>${ht?'<th>Layer 2a′와</th>':''}<th>Layer 2a와</th>${hb?'<th>Layer 2b와</th>':''}<th>시간</th></tr>${rs.map(r=>{
       const n=it.slides.filter(s=>r.s[s.img]).length,ma=m(r,a.name),mb=m(r,b.name);
       const inc='<span class="muted">미완료</span>',v=n<it.slides.length?inc:vd(ma,mb,a.l2a,b.l2a),vb=n<it.slides.length?inc:vd(ma,mb,a.l2b,b.l2b),vt=n<it.slides.length?inc:vd(ma,mb,a.l2at,b.l2at);
-      return `<tr><td>${esc(r.reader)}</td><td>${n}/${it.slides.length}</td><td>${f2(ma)}</td><td>${f2(mb)}</td><td>${v}</td>${ht?`<td>${vt}</td>`:''}${hb?`<td>${vb}</td>`:''}<td>${r.sec}s</td></tr>`;}).join('')}</table>`:'<div class="muted" style="margin-top:8px;font-size:12.5px">응답 없음</div>';
+      return `<tr><td>${esc(r.reader)}</td><td>${n}/${it.slides.length}</td><td>${f2(ma)}</td><td>${f2(mb)}</td>${ht?`<td>${vt}</td>`:''}<td>${v}</td>${hb?`<td>${vb}</td>`:''}<td>${r.sec}s</td></tr>`;}).join('')}</table>`:'<div class="muted" style="margin-top:8px;font-size:12.5px">응답 없음</div>';
     return `<section class="card"><div class="ch"><b>#${it.seq}</b><span>${esc(it.project)} · ${esc(it.diagnosis)}</span>
-    <span class="tag c1">${esc(a.name)} · L2a ${a.l2a.toFixed(4)}${pref===a?' ★':''}${lb(a)}</span><span class="tag c2">${esc(b.name)} · L2a ${b.l2a.toFixed(4)}${pref===b?' ★':''}${lb(b)}</span><span class="tag">|ΔL2a| ${it.delta.toFixed(4)}</span>${ht?`<span class="tag">|ΔL2a′| ${Math.abs(a.l2at-b.l2at).toFixed(4)}${prefT!==pref?' · <b>L2a와 반대</b>':''}</span>`:''}${hb?`<span class="tag">|ΔL2b| ${Math.abs(a.l2b-b.l2b).toFixed(4)}</span>`:''}<span class="tag">item ${it.id}</span></div>
+    <span class="tag c1">${esc(a.name)} · ${lb(a)}</span><span class="tag c2">${esc(b.name)} · ${lb(b)}</span>${ht?`<span class="tag">|ΔL2a′| ${Math.abs(a.l2at-b.l2at).toFixed(4)}${prefT!==pref0?' · <b>기존 L2a와 반대</b>':''}</span>`:''}<span class="tag">|ΔL2a| ${it.delta.toFixed(4)}</span>${hb?`<span class="tag">|ΔL2b| ${Math.abs(a.l2b-b.l2b).toFixed(4)}</span>`:''}<span class="tag">item ${it.id}</span></div>
     <div class="grid"><figure class="tile q"><div class="box"><img loading="lazy" src="${im(it.query_img,'thumb')}" data-img="${it.query_img}" data-cap="기준 · ${esc(it.query)}"></div><div class="qcap" title="${esc(it.query)}">기준 · ${esc(it.query)}</div></figure>
     <div class="sl">${it.slides.map((s,i)=>`<figure class="tile${s.system===pref.name?' pref':''}"><div class="box"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} top-1 · ${s.id}`)}"></div>
-      <div class="chip ${cls(s.system)}" title="${esc(s.id)}"><span>${i+1} · ${esc(s.system)}</span><b>${(()=>{const x=it.systems.find(y=>y.name===s.system);return `L2a ${x.l2a.toFixed(3)}${Number.isFinite(x.l2at)?` · L2a′ ${x.l2at.toFixed(3)}`:''}${Number.isFinite(x.l2b)?` · L2b ${x.l2b.toFixed(3)}`:''}`;})()}</b></div>
+      <div class="chip ${cls(s.system)}" title="${esc(s.id)}"><span>${i+1} · ${esc(s.system)}</span><b>${(()=>{const x=it.systems.find(y=>y.name===s.system);return `${Number.isFinite(x.l2at)?`L2a′ ${x.l2at.toFixed(3)} · `:''}L2a ${x.l2a.toFixed(3)}${Number.isFinite(x.l2b)?` · L2b ${x.l2b.toFixed(3)}`:''}`;})()}</b></div>
       <div class="scs">${rs.map(r=>`<span class="sc v${r.s[s.img]||0}" title="${esc(r.reader)}">${r.s[s.img]||'-'}</span>`).join('')}</div></figure>`).join('')}</div></div>${rt}</section>`;}).join('');
 }
 const list_=document.getElementById('list');
