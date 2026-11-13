@@ -126,18 +126,18 @@ function render(){
     const pref0=a.l2a>b.l2a?a:b,hb=Number.isFinite(a.l2b),prefB=hb?(a.l2b>b.l2b?a:b):null;
     const ht=Number.isFinite(a.l2at)&&Number.isFinite(b.l2at),prefT=ht?(a.l2at>b.l2at?a:b):null;
     const pref=prefT||pref0;
-    const lb=x=>(ht?`L2a′ ${x.l2at.toFixed(4)}${prefT===x?' ★':''} · `:'')+`L2a ${x.l2a.toFixed(4)}${pref0===x?' ▲':''}`+(hb?` · L2b ${x.l2b.toFixed(4)}${prefB===x?' ◆':''}`:'');
+    const lb=x=>(ht?`L2a′ ${x.l2at.toFixed(4)}${prefT===x?' ★':''} · `:'')+`L2a ${x.l2a.toFixed(4)}${pref0===x?' ▲':''}`+(hb?` · L2b′ ${x.l2b.toFixed(4)}${prefB===x?' ◆':''}`:'');
     const vd=(ma,mb,x,y)=>ma===mb?'<span class="muted">동점</span>':((ma>mb)===(x>y)?'<span style="color:var(--ok);font-weight:600">일치</span>':'<span style="color:var(--no);font-weight:600">불일치</span>');
     const m=(r,k)=>mean(it.slides.filter(s=>s.system===k&&r.s[s.img]).map(s=>r.s[s.img]));
-    const rt=rs.length?`<table class="rt"><tr><th>판독자</th><th>평가</th><th class="c1">${esc(a.name)} 점수</th><th class="c2">${esc(b.name)} 점수</th>${ht?'<th>Layer 2a′와</th>':''}<th>Layer 2a와</th>${hb?'<th>Layer 2b와</th>':''}<th>시간</th></tr>${rs.map(r=>{
+    const rt=rs.length?`<table class="rt"><tr><th>판독자</th><th>평가</th><th class="c1">${esc(a.name)} 점수</th><th class="c2">${esc(b.name)} 점수</th>${ht?'<th>Layer 2a′와</th>':''}<th>Layer 2a와</th>${hb?'<th>Layer 2b′와</th>':''}<th>시간</th></tr>${rs.map(r=>{
       const n=it.slides.filter(s=>r.s[s.img]).length,ma=m(r,a.name),mb=m(r,b.name);
       const inc='<span class="muted">미완료</span>',v=n<it.slides.length?inc:vd(ma,mb,a.l2a,b.l2a),vb=n<it.slides.length?inc:vd(ma,mb,a.l2b,b.l2b),vt=n<it.slides.length?inc:vd(ma,mb,a.l2at,b.l2at);
       return `<tr><td>${esc(r.reader)}</td><td>${n}/${it.slides.length}</td><td>${f2(ma)}</td><td>${f2(mb)}</td>${ht?`<td>${vt}</td>`:''}<td>${v}</td>${hb?`<td>${vb}</td>`:''}<td>${r.sec}s</td></tr>`;}).join('')}</table>`:'<div class="muted" style="margin-top:8px;font-size:12.5px">응답 없음</div>';
     return `<section class="card"><div class="ch"><b>#${it.seq}</b><span>${esc(it.project)} · ${esc(it.diagnosis)}</span>
-    <span class="tag c1">${esc(a.name)} · ${lb(a)}</span><span class="tag c2">${esc(b.name)} · ${lb(b)}</span>${ht?`<span class="tag">|ΔL2a′| ${Math.abs(a.l2at-b.l2at).toFixed(4)}${prefT!==pref0?' · <b>기존 L2a와 반대</b>':''}</span>`:''}<span class="tag">|ΔL2a| ${it.delta.toFixed(4)}</span>${hb?`<span class="tag">|ΔL2b| ${Math.abs(a.l2b-b.l2b).toFixed(4)}</span>`:''}<span class="tag">item ${it.id}</span></div>
+    <span class="tag c1">${esc(a.name)} · ${lb(a)}</span><span class="tag c2">${esc(b.name)} · ${lb(b)}</span>${ht?`<span class="tag">|ΔL2a′| ${Math.abs(a.l2at-b.l2at).toFixed(4)}${prefT!==pref0?' · <b>기존 L2a와 반대</b>':''}</span>`:''}<span class="tag">|ΔL2a| ${it.delta.toFixed(4)}</span>${hb?`<span class="tag">|ΔL2b′| ${Math.abs(a.l2b-b.l2b).toFixed(4)}${prefB!==prefT?' · <b>L2a′와 반대</b>':''}</span>`:''}<span class="tag">item ${it.id}</span></div>
     <div class="grid"><figure class="tile q"><div class="box"><img loading="lazy" src="${im(it.query_img,'thumb')}" data-img="${it.query_img}" data-cap="기준 · ${esc(it.query)}"></div><div class="qcap" title="${esc(it.query)}">기준 · ${esc(it.query)}</div></figure>
     <div class="sl">${it.slides.map((s,i)=>`<figure class="tile${s.system===pref.name?' pref':''}"><div class="box"><img loading="lazy" src="${im(s.img,'thumb')}" data-img="${s.img}" data-cap="${esc(`${i+1} · ${s.system} top-1 · ${s.id}`)}"></div>
-      <div class="chip ${cls(s.system)}" title="${esc(s.id)}"><span>${i+1} · ${esc(s.system)}</span><b>${(()=>{const x=it.systems.find(y=>y.name===s.system);return `${Number.isFinite(x.l2at)?`L2a′ ${x.l2at.toFixed(3)} · `:''}L2a ${x.l2a.toFixed(3)}${Number.isFinite(x.l2b)?` · L2b ${x.l2b.toFixed(3)}`:''}`;})()}</b></div>
+      <div class="chip ${cls(s.system)}" title="${esc(s.id)}"><span>${i+1} · ${esc(s.system)}</span><b>${(()=>{const x=it.systems.find(y=>y.name===s.system);return `${Number.isFinite(x.l2at)?`L2a′ ${x.l2at.toFixed(3)} · `:''}L2a ${x.l2a.toFixed(3)}${Number.isFinite(x.l2b)?` · L2b′ ${x.l2b.toFixed(3)}${prefB===x?' ◆':''}`:''}`;})()}</b></div>
       <div class="scs">${rs.map(r=>`<span class="sc v${r.s[s.img]||0}" title="${esc(r.reader)}">${r.s[s.img]||'-'}</span>`).join('')}</div></figure>`).join('')}</div></div>${rt}</section>`;}).join('');
 }
 const list_=document.getElementById('list');
